@@ -3,7 +3,7 @@ from uuid import UUID
 from datetime import date
 from typing import Optional
 
-class PersonResponse: 
+class PersonResponse(BaseModel): 
     id: UUID
     nome: str
     idade: int
@@ -17,7 +17,7 @@ class PersonResponse:
     email: Optional[str]
     telefone_fixo: Optional[str]
     celular: Optional[str]
-    altura: float
+    altura: str
     peso: float
     tipo_sanguineo: str
 
