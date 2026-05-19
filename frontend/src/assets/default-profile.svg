@@ -1,0 +1,9 @@
+<svg width="240" height="300" viewBox="0 0 240 300" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Foto padrão</title>
+  <desc id="desc">Silhueta genérica usada quando a pessoa não possui foto cadastrada.</desc>
+  <rect width="240" height="300" rx="18" fill="#E7ECE8"/>
+  <rect x="12" y="12" width="216" height="276" rx="14" fill="#F8FAF8" stroke="#C8D3CC" stroke-width="2"/>
+  <circle cx="120" cy="104" r="44" fill="#B9C7BF"/>
+  <path d="M54 232C58.3 189.1 84.3 162 120 162C155.7 162 181.7 189.1 186 232C186.6 238.1 181.7 244 175.5 244H64.5C58.3 244 53.4 238.1 54 232Z" fill="#B9C7BF"/>
+  <path d="M78 260H162" stroke="#A6B6AD" stroke-width="8" stroke-linecap="round"/>
+</svg>
