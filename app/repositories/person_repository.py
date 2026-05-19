@@ -9,3 +9,9 @@ class PersonRepository:
         return self.db.query(Person).all()
     def get_by_cpf(self, cpf: str):
         return self.db.query(Person).filter(Person.cpf == cpf).first()
+    
+    def create(self, person: Person):
+        self.db.add(person)
+        self.db.commit()
+        self.db.refresh(person)
+        return person

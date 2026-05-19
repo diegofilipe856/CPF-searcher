@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.database import get_db
+from app.domain.person import Person
 from app.repositories.person_repository import PersonRepository
 from app.services.personService import PersonService
-from app.domain.schemas.personResponse import PersonResponse
+from app.domain.schemas.personResponse import PersonCreate, PersonResponse
 
 router = APIRouter(prefix="/person", tags=["person"])
 
@@ -23,4 +24,11 @@ def get_person_by_cpf(cpf: str, db: Session = Depends(get_db)):
     person = service.get_person_by_cpf(cpf)
     if not person:
         raise HTTPException(status_code=404, detail="Person not found")
+    return person
+
+@router.post("/", response_model=PersonResponse)
+def create_person(person_data: PersonCreate, db: Session = Depends(get_db)):
+    repo = PersonRepository(db)
+    service = PersonService(repo)
+    person = service.create_person(person_data.dict())
     return person
