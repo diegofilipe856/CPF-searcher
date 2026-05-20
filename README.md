@@ -2,3 +2,19 @@ Esse projeto tem como objetivo aplicar conhecimentos adquiridos em Python e Fast
 
 Para iniciar localmente, rode:
 uv run uvicorn app.main:app --reload
+
+## Frontend
+
+O frontend React fica em `frontend/` e consome a API em `http://localhost:8000` por padrão.
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Se a API estiver em outra porta ou host, crie um arquivo `.env` dentro de `frontend/`:
+
+```bash
+VITE_API_URL=http://localhost:8000
+```
