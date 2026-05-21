@@ -4,7 +4,7 @@ from typing import List
 
 from app.database import get_db
 from app.services import person_service
-from app.domain.schemas.personResponse import PersonCreate, PersonResponse
+from app.domain.schemas.person_response import PersonCreate, PersonResponse
 
 router = APIRouter(prefix="/person", tags=["person"])
 

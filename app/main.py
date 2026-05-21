@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.controllers import person_controller
+from app.controllers import criminal_records_controller
 
 app = FastAPI()
 
@@ -18,3 +19,4 @@ def read_root():
     return {"Hello": "World"}
 
 app.include_router(person_controller.router)
+app.include_router(criminal_records_controller.router)
