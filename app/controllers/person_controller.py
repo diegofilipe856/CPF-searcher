@@ -10,7 +10,7 @@ from app.domain.schemas.personResponse import PersonCreate, PersonResponse
 
 router = APIRouter(prefix="/person", tags=["person"])
 
-@router.get("/", response_model=List[PersonResponse])
+@router.get("", response_model=List[PersonResponse])
 def get_all_people(db: Session = Depends(get_db)):
     repo = PersonRepository(db)
     service = PersonService(repo)
@@ -26,7 +26,7 @@ def get_person_by_cpf(cpf: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Person not found")
     return person
 
-@router.post("/", response_model=PersonResponse)
+@router.post("", response_model=PersonResponse)
 def create_person(person_data: PersonCreate, db: Session = Depends(get_db)):
     repo = PersonRepository(db)
     service = PersonService(repo)
