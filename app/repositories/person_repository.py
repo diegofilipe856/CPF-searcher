@@ -1,17 +1,16 @@
 from sqlalchemy.orm import Session
 from app.domain.person import Person
 
-class PersonRepository:
-    def __init__(self, db: Session):
-        self.db = db
 
-    def get_all(self):
-        return self.db.query(Person).all()
-    def get_by_cpf(self, cpf: str):
-        return self.db.query(Person).filter(Person.cpf == cpf).first()
-    
-    def create(self, person: Person):
-        self.db.add(person)
-        self.db.commit()
-        self.db.refresh(person)
-        return person
+def get_all_people(db: Session):
+    return db.query(Person).all()
+
+def get_person_by_cpf(db: Session, cpf: str):
+    return db.query(Person).filter(Person.cpf == cpf).first()
+
+def create_person(db: Session, person: Person):
+    db.add(person)
+    db.commit()
+    db.refresh(person)
+    return person
+
