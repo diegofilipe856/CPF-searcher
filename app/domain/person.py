@@ -5,22 +5,22 @@ from app.database import Base
 from sqlalchemy.dialects.postgresql import UUID
 
 class Person(Base):
-    __tablename__ = "pessoas"
+    __tablename__ = "people"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    nome = Column(String(255), nullable=False)
-    idade = Column(Integer, nullable=False)
+    name = Column(String(255), nullable=False)
+    age = Column(Integer, nullable=False)
     cpf = Column(String(14), nullable=False, unique=True)
     rg = Column(String(20), nullable=False, unique=True, index=True)
-    data_nasc = Column(Date, nullable=False)
-    sexo = Column(String(20), nullable=False)
-    signo = Column(String(20))
-    mae = Column(String(255))
-    pai = Column(String(255))
+    birth_date = Column(Date, nullable=False)
+    sex = Column(String(20), nullable=False)
+    zodiac_sign = Column(String(20))
+    mother_name = Column(String(255))
+    father_name = Column(String(255))
     email = Column(String(255))
-    telefone_fixo = Column(String(20))
-    celular = Column(String(20))
-    altura = Column(String(10), nullable=False)
-    peso = Column(Float, nullable=False)
-    tipo_sanguineo = Column(String(5), nullable=False)
-    cor = Column(String(20))
+    landline = Column(String(20))
+    mobile_phone = Column(String(20))
+    height = Column(String(10), nullable=False)
+    weight = Column(Float, nullable=False)
+    blood_type = Column(String(5), nullable=False)
+    color = Column(String(20))

@@ -10,8 +10,13 @@ async function request(path, options) {
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Não foi possível consultar a API.");
+    const contentType = response.headers.get("Content-Type") || "";
+    const body = contentType.includes("application/json") ? await response.json() : await response.text();
+    const message = typeof body === "string" ? body : body.detail;
+
+    throw new Error(
+      message === "Person not found" ? "Pessoa não encontrada." : message || "Não foi possível consultar a API.",
+    );
   }
 
   return response.json();
