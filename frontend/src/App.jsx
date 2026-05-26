@@ -37,18 +37,18 @@ const FIELD_GROUPS = [
     fields: [
       ["CPF", "cpf"],
       ["RG", "rg"],
-      ["Data de nascimento", "data_nasc", "date"],
-      ["Sexo", "sexo"],
-      ["Idade", "idade", "years"],
-      ["Signo", "signo"],
+      ["Data de nascimento", "birth_date", "date"],
+      ["Sexo", "sex", "sex"],
+      ["Idade", "age", "years"],
+      ["Signo", "zodiac_sign", "zodiac"],
     ],
   },
   {
     title: "Filiação",
     icon: UsersRound,
     fields: [
-      ["Mãe", "mae"],
-      ["Pai", "pai"],
+      ["Mãe", "mother_name"],
+      ["Pai", "father_name"],
     ],
   },
   {
@@ -56,22 +56,48 @@ const FIELD_GROUPS = [
     icon: Contact,
     fields: [
       ["E-mail", "email"],
-      ["Telefone fixo", "telefone_fixo"],
-      ["Celular", "celular"],
+      ["Telefone fixo", "landline"],
+      ["Celular", "mobile_phone"],
     ],
   },
   {
     title: "Características",
     icon: Gauge,
     fields: [
-      ["Altura", "altura"],
-      ["Peso", "peso", "weight"],
-      ["Tipo sanguíneo", "tipo_sanguineo"],
+      ["Altura", "height", "height"],
+      ["Peso", "weight", "weight"],
+      ["Tipo sanguíneo", "blood_type"],
     ],
   },
 ];
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" });
+
+const VALUE_TRANSLATIONS = {
+  sex: {
+    Male: "Masculino",
+    Female: "Feminino",
+  },
+  zodiac: {
+    Aquarius: "Aquário",
+    Aries: "Áries",
+    Capricorn: "Capricórnio",
+    Pisces: "Peixes",
+    Taurus: "Touro",
+  },
+};
+
+function parseNumericValue(value) {
+  const normalizedValue = String(value).trim().replace(",", ".");
+  const match = normalizedValue.match(/-?\d+(?:\.\d+)?/);
+
+  if (!match) {
+    return null;
+  }
+
+  const numericValue = Number(match[0]);
+  return Number.isNaN(numericValue) ? null : numericValue;
+}
 
 function formatValue(value, type) {
   if (value === null || value === undefined || value === "") {
@@ -86,8 +112,20 @@ function formatValue(value, type) {
     return `${value} anos`;
   }
 
+  if (type === "height") {
+    const numericValue = parseNumericValue(value);
+    return numericValue === null
+      ? String(value)
+      : `${numericValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} m`;
+  }
+
   if (type === "weight") {
-    return `${Number(value).toLocaleString("pt-BR")} kg`;
+    const numericValue = parseNumericValue(value);
+    return numericValue === null ? String(value) : `${numericValue.toLocaleString("pt-BR")} kg`;
+  }
+
+  if (VALUE_TRANSLATIONS[type]?.[value]) {
+    return VALUE_TRANSLATIONS[type][value];
   }
 
   return String(value);
@@ -98,6 +136,10 @@ function normalize(value) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+}
+
+function onlyDigits(value) {
+  return String(value || "").replace(/\D/g, "");
 }
 
 /* ================================================================
@@ -331,10 +373,10 @@ function PersonCard({ person, selected, onSelect }) {
     >
       <PersonPhoto compact />
       <span className="person-card__body">
-        <strong>{person.nome}</strong>
+        <strong>{person.name}</strong>
         <small>CPF {person.cpf}</small>
         <span>
-          RG {person.rg} · {person.idade} anos
+          RG {person.rg} · {person.age} anos
         </span>
       </span>
     </button>
@@ -391,18 +433,18 @@ function DetailPanel({ person, loading, error, onCriminalRecord }) {
   }
 
   return (
-    <aside className="detail-panel" aria-label={`Dados de ${person.nome}`}>
+    <aside className="detail-panel" aria-label={`Dados de ${person.name}`}>
       {error && <StatusMessage type="error">{error}</StatusMessage>}
       <div className="profile-header">
         <PersonPhoto />
         <div className="profile-header__content">
-        <span className="agency-label">Registro individual</span>
-          <h2>{person.nome}</h2>
+          <span className="agency-label">Registro individual</span>
+          <h2>{person.name}</h2>
           <p>CPF {person.cpf}</p>
           <div className="profile-tags" aria-label="Resumo cadastral">
-            <span>{person.sexo}</span>
-            <span>{person.tipo_sanguineo}</span>
-            <span>{person.idade} anos</span>
+            <span>{formatValue(person.sex, "sex")}</span>
+            <span>{person.blood_type}</span>
+            <span>{person.age} anos</span>
           </div>
         </div>
       </div>
@@ -495,16 +537,21 @@ function PeopleSearch() {
 
   const filteredPeople = useMemo(() => {
     const search = normalize(query);
+    const documentSearch = onlyDigits(query);
 
     if (!search) {
       return people;
     }
 
-    return people.filter((person) =>
-      [person.nome, person.cpf, person.rg, person.mae, person.pai].some((value) =>
+    return people.filter((person) => {
+      const textMatches = [person.name, person.cpf, person.rg, person.mother_name, person.father_name].some((value) =>
         normalize(value).includes(search),
-      ),
-    );
+      );
+      const documentMatches =
+        documentSearch && [person.cpf, person.rg].some((value) => onlyDigits(value).includes(documentSearch));
+
+      return textMatches || documentMatches;
+    });
   }, [people, query]);
 
   function handleSelect(person) {

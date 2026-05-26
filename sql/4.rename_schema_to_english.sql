@@ -1,0 +1,44 @@
+ALTER TABLE IF EXISTS pessoas RENAME TO people;
+
+ALTER TABLE IF EXISTS people RENAME COLUMN nome TO name;
+ALTER TABLE IF EXISTS people RENAME COLUMN idade TO age;
+ALTER TABLE IF EXISTS people RENAME COLUMN data_nasc TO birth_date;
+ALTER TABLE IF EXISTS people RENAME COLUMN sexo TO sex;
+ALTER TABLE IF EXISTS people RENAME COLUMN signo TO zodiac_sign;
+ALTER TABLE IF EXISTS people RENAME COLUMN mae TO mother_name;
+ALTER TABLE IF EXISTS people RENAME COLUMN pai TO father_name;
+ALTER TABLE IF EXISTS people RENAME COLUMN senha TO password;
+ALTER TABLE IF EXISTS people RENAME COLUMN cep TO zip_code;
+ALTER TABLE IF EXISTS people RENAME COLUMN endereco TO address;
+ALTER TABLE IF EXISTS people RENAME COLUMN numero TO address_number;
+ALTER TABLE IF EXISTS people RENAME COLUMN bairro TO neighborhood;
+ALTER TABLE IF EXISTS people RENAME COLUMN cidade TO city;
+ALTER TABLE IF EXISTS people RENAME COLUMN estado TO state;
+ALTER TABLE IF EXISTS people RENAME COLUMN telefone_fixo TO landline;
+ALTER TABLE IF EXISTS people RENAME COLUMN celular TO mobile_phone;
+ALTER TABLE IF EXISTS people RENAME COLUMN altura TO height;
+ALTER TABLE IF EXISTS people RENAME COLUMN peso TO weight;
+ALTER TABLE IF EXISTS people RENAME COLUMN tipo_sanguineo TO blood_type;
+ALTER TABLE IF EXISTS people RENAME COLUMN cor TO color;
+
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN pessoa_id TO person_id;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN codigo TO code;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN titulo TO title;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN tipo_crime TO crime_type;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN categoria_crime TO crime_category;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN status_crime TO crime_status;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN gravidade_crime TO crime_severity;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN data_ocorrencia TO occurrence_date;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN hora_ocorrencia TO occurrence_time;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN local_ocorrencia TO occurrence_location;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN cidade_ocorrencia TO occurrence_city;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN estado_ocorrencia TO occurrence_state;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN vitima_nome TO victim_name;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN vitima_cpf TO victim_cpf;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN vitima_tipo TO victim_type;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN descricao_crime TO crime_description;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN autoridade_responsavel TO responsible_authority;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN unidade_responsavel TO responsible_unit;
+ALTER TABLE IF EXISTS criminal_records RENAME COLUMN observacoes TO notes;
+
+ALTER INDEX IF EXISTS idx_pessoas_cpf RENAME TO idx_people_cpf;

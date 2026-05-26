@@ -1,29 +1,28 @@
-CREATE TABLE IF NOT EXISTS pessoas (
+CREATE TABLE IF NOT EXISTS people (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    nome VARCHAR(255) NOT NULL,
-    idade INT,
+    name VARCHAR(255) NOT NULL,
+    age INT,
     cpf VARCHAR(14) UNIQUE NOT NULL,
-    rg VARCHAR(20),
-    data_nasc DATE,
-    sexo VARCHAR(20),
-    signo VARCHAR(20),
-    mae VARCHAR(255),
-    pai VARCHAR(255),
+    rg VARCHAR(20) UNIQUE,
+    birth_date DATE,
+    sex VARCHAR(20),
+    zodiac_sign VARCHAR(20),
+    mother_name VARCHAR(255),
+    father_name VARCHAR(255),
     email VARCHAR(255),
-    senha VARCHAR(255),
-    cep VARCHAR(10),
-    endereco TEXT,
-    numero INT,
-    bairro VARCHAR(100),
-    cidade VARCHAR(100),
-    estado VARCHAR(2),
-    telefone_fixo VARCHAR(20),
-    celular VARCHAR(20),
-    altura VARCHAR(10),
-    peso FLOAT,
-    tipo_sanguineo VARCHAR(5),
-    cor VARCHAR(20)
+    password VARCHAR(255),
+    zip_code VARCHAR(10),
+    address TEXT,
+    address_number INT,
+    neighborhood VARCHAR(100),
+    city VARCHAR(100),
+    state VARCHAR(2),
+    landline VARCHAR(20),
+    mobile_phone VARCHAR(20),
+    height VARCHAR(10),
+    weight FLOAT,
+    blood_type VARCHAR(5),
+    color VARCHAR(20)
 );
 
-   -- Índice para busca rápida por CPF
-   CREATE INDEX IF NOT EXISTS idx_pessoas_cpf ON pessoas(cpf);
+CREATE INDEX IF NOT EXISTS idx_people_cpf ON people(cpf);
