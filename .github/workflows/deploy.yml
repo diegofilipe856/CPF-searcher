@@ -16,25 +16,8 @@ jobs:
         with:
           clean: false # Mantém arquivos gerados no runner (como .env) se necessário
 
-      - name: Subir Banco de Dados
-        run: docker compose up -d
-
-      - name: Instalar dependências do Backend (uv)
-        run: |
-          # Garante que o uv está instalado
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          
-          # Sincroniza/Instala dependências
-          # O comando exato pode variar dependendo de como você gerencia o pyproject.toml
-          # uv pip install -e .
-          
-      - name: Reiniciar Backend
-        run: |
-          echo "Reiniciando backend..."
-          # Exemplo usando PM2 (recomendado para manter em background):
-          # pm2 restart backend || pm2 start "uv run uvicorn app.main:app --host 0.0.0.0 --port 8000" --name backend
-          # Ou se usar systemd:
-          # sudo systemctl restart meu-backend.service
+      - name: Subir Infraestrutura (Banco + Backend)
+        run: docker compose up -d --build
 
       - name: Instalar e Buildar Frontend
         working-directory: ./frontend
