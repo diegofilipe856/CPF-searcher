@@ -11,9 +11,6 @@ WORKDIR /app
 # Copia os arquivos de dependência
 COPY pyproject.toml uv.lock ./
 
-# Modifica o requires-python temporariamente se estiver pedindo 3.14 para evitar falhas no uv sync
-RUN sed -i 's/>=3.14/>=3.12/g' pyproject.toml || true
-
 # Instala as dependências
 RUN uv sync --frozen
 
