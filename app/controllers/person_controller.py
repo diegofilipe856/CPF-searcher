@@ -6,6 +6,8 @@ from app.database import get_db
 from app.services import person_service
 from app.domain.schemas.person_response import PersonCreate, PersonResponse
 
+from app.auth import get_api_key
+
 router = APIRouter(prefix="/person", tags=["person"])
 
 @router.get("", response_model=List[PersonResponse])
@@ -21,6 +23,6 @@ def find_person_by_cpf(cpf: str, db: Session = Depends(get_db)):
     return person
 
 @router.post("", response_model=PersonResponse)
-def register_person(person_data: PersonCreate, db: Session = Depends(get_db)):
+def register_person(person_data: PersonCreate, db: Session = Depends(get_db), api_key: str = Depends(get_api_key)):
     person = person_service.create_person(db, person_data.model_dump())
     return person
