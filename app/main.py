@@ -7,7 +7,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://ssp-digital.diegobezerra.space"],
+    allow_origins=["http://localhost:5173", "https://ssp-digital.diegobezerra.space", "https://diegobezerra.space"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
