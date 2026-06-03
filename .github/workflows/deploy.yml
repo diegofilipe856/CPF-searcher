@@ -38,6 +38,8 @@ jobs:
 
       - name: Instalar e Buildar Frontend
         working-directory: ./frontend
+        env:
+          VITE_API_URL: https://ssp-digital.diegobezerra.space
         run: |
           npm install
           npm run build
