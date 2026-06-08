@@ -11,3 +11,8 @@ router = APIRouter(prefix="/criminal-records", tags=["criminal-records"])
 def list_criminal_records(db: Session = Depends(get_db)):
     records = criminal_records_service.get_all_criminal_records(db)
     return records
+
+@router.get("/{cpf}", response_model=list[CriminalRecordResponse])
+def get_criminal_record(cpf: str, db: Session = Depends(get_db)):
+    records = criminal_records_service.get_criminal_record_by_cpf(db, cpf)
+    return records
