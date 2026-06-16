@@ -23,7 +23,7 @@ async function request(path, options) {
 }
 
 export function getPeople() {
-  return request("/person/");
+  return request("/person");
 }
 
 export function getPersonByCpf(cpf) {
