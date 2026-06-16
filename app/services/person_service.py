@@ -2,11 +2,7 @@ from app.repositories import person_repository
 from app.domain.person import Person
 
 
-def format_cpf(cpf: str) -> str:
-    digits = ''.join(char for char in cpf if char.isdigit())
-    if len(digits) != 11:
-        raise ValueError("CPF must contain 11 digits.")
-    return f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
+from ..shared.helpers.format_cpf import format_cpf
 
 def format_rg(rg: str) -> str:
     digits = ''.join(char for char in rg if char.isdigit())
@@ -30,6 +26,12 @@ def get_person_by_cpf(db, cpf: str):
         person.rg = format_rg(person.rg)
     return person
 
+def get_person_by_id(db, person_id: int):
+    person = person_repository.get_person_by_id(db, person_id)
+    if person:
+        person.cpf = format_cpf(person.cpf)
+        person.rg = format_rg(person.rg)
+    return person
 def create_person(db, person_data: dict):
     person_data["cpf"] = format_cpf(person_data["cpf"])
     person_data["rg"] = format_rg(person_data["rg"])

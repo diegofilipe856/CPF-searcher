@@ -1,0 +1,38 @@
+name: Deploy to Self-Hosted
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy App
+    runs-on: self-hosted # Indica que vai rodar no seu runner próprio
+    
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+        with:
+          clean: false # Mantém arquivos gerados no runner (como .env) se necessário
+
+      - name: Subir Infraestrutura (Banco + Backend)
+        run: docker compose up -d --build
+
+      - name: Instalar e Buildar Frontend
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: https://ssp-digital.diegobezerra.space
+        run: |
+          npm install
+          npm run build
+
+      - name: Deploy Frontend to Cloudflare Pages
+        working-directory: ./frontend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "Deploying to Cloudflare Pages..."
+          # Deploya a pasta dist para o projeto ssp-digital-project no Cloudflare
+          npx wrangler pages deploy dist --project-name ssp-digital-project --commit-dirty=true
