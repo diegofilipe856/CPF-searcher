@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
+  ArrowLeft,
   BadgeCheck,
   CalendarDays,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Contact,
   Database,
   FileSearch,
@@ -24,7 +27,14 @@ import {
   X,
 } from "lucide-react";
 import defaultProfile from "./assets/default-profile.svg";
-import { API_BASE_URL, getCriminalRecord, getPeople, getPersonByCpf } from "./api/people";
+import {
+  API_BASE_URL,
+  getAllCriminalRecords,
+  getCriminalRecordByCpf,
+  getPersonById,
+  getPeople,
+  getPersonByCpf,
+} from "./api/people";
 
 /* ================================================================
    Constants & Utilities
@@ -142,6 +152,18 @@ function onlyDigits(value) {
   return String(value || "").replace(/\D/g, "");
 }
 
+function formatDocument(value) {
+  if (!value) return "—";
+  const digits = onlyDigits(value);
+  if (digits.length === 11) {
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  }
+  if (digits.length === 14) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+  }
+  return value;
+}
+
 /* ================================================================
    Navigation Config
    ================================================================ */
@@ -149,13 +171,15 @@ function onlyDigits(value) {
 const NAV_ITEMS = [
   { id: "home", label: "Início", icon: LayoutDashboard },
   { id: "people", label: "Consulta de Pessoas", icon: Search },
-  { id: "criminal", label: "Ficha Criminal", icon: FileSearch, disabled: true },
+  { id: "criminal", label: "Fichas Criminais", icon: FileSearch },
   { id: "profile", label: "Perfil do Servidor", icon: UserCircle, disabled: true },
 ];
 
 const PAGE_TITLES = {
   home: "Início",
   people: "Consulta de Pessoas",
+  criminal: "Fichas Criminais",
+  personCriminal: "Ficha Criminal",
 };
 
 /* ================================================================
@@ -323,18 +347,18 @@ function HomePage({ onNavigate }) {
             </div>
           </button>
 
-          <div className="module-card module-card--disabled" aria-disabled="true">
+          <button className="module-card" type="button" onClick={() => onNavigate("criminal")}>
             <div className="module-card__icon">
               <FileSearch size={28} />
             </div>
             <div className="module-card__body">
-              <strong>Ficha Criminal</strong>
+              <strong>Fichas Criminais</strong>
               <p>Consulte antecedentes e registros criminais de pessoas cadastradas.</p>
             </div>
             <div className="module-card__arrow">
-              <span className="module-card__badge">Em breve</span>
+              <ChevronRight size={20} />
             </div>
-          </div>
+          </button>
 
           <div className="module-card module-card--disabled" aria-disabled="true">
             <div className="module-card__icon">
@@ -467,7 +491,7 @@ function DetailPanel({ person, loading, error, onCriminalRecord }) {
    People Search — Page
    ================================================================ */
 
-function PeopleSearch() {
+function PeopleSearch({ onViewCriminal }) {
   const [people, setPeople] = useState([]);
   const [selectedCpf, setSelectedCpf] = useState("");
   const [selectedPerson, setSelectedPerson] = useState(null);
@@ -560,9 +584,9 @@ function PeopleSearch() {
   }
 
   function handleCriminalRecord(person) {
-    getCriminalRecord(person.cpf).catch((err) => {
-      setNotice(err.message);
-    });
+    if (onViewCriminal) {
+      onViewCriminal(person);
+    }
   }
 
   return (
@@ -646,6 +670,427 @@ function PeopleSearch() {
 }
 
 /* ================================================================
+   Criminal Records — Utilities
+   ================================================================ */
+
+function statusClass(status) {
+  const s = (status || "").toLowerCase();
+  if (s.includes("under investigation") || s.includes("investigação") || s.includes("investigacao")) return "investigating";
+  if (s.includes("convicted") || s.includes("condenado")) return "convicted";
+  if (s.includes("acquitted") || s.includes("absolvido")) return "acquitted";
+  if (s.includes("closed") || s.includes("encerrado") || s.includes("arquivado")) return "closed";
+  if (s.includes("pending") || s.includes("pendente")) return "pending";
+  return "default";
+}
+
+function severityClass(severity) {
+  const s = (severity || "").toLowerCase();
+  if (s.includes("high") || s.includes("alta") || s.includes("grave")) return "high";
+  if (s.includes("medium") || s.includes("média") || s.includes("media")) return "medium";
+  if (s.includes("low") || s.includes("baixa") || s.includes("leve")) return "low";
+  return "default";
+}
+
+/* ================================================================
+   Criminal Records — Suspect Info Component
+   ================================================================ */
+
+function SuspectInfo({ personId }) {
+  const [person, setPerson] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!personId) return;
+    let active = true;
+    setLoading(true);
+    getPersonById(personId)
+      .then((p) => { if (active) setPerson(p); })
+      .catch(() => {})
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [personId]);
+
+  if (loading) {
+    return (
+      <div className="record-detail-section record-detail-section--suspect">
+        <h4><Fingerprint size={16} aria-hidden="true" /> Suspeito</h4>
+        <div className="suspect-loading">
+          <div className="skeleton-line skeleton-line--wide" />
+          <div className="skeleton-line" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!person) {
+    return (
+      <div className="record-detail-section record-detail-section--suspect">
+        <h4><Fingerprint size={16} aria-hidden="true" /> Suspeito</h4>
+        <p className="suspect-unavailable">Dados não disponíveis</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="record-detail-section record-detail-section--suspect">
+      <h4><Fingerprint size={16} aria-hidden="true" /> Suspeito</h4>
+      <div className="suspect-card">
+        <PersonPhoto compact />
+        <dl>
+          <div className="field-row"><dt>Nome</dt><dd>{person.name}</dd></div>
+          <div className="field-row"><dt>CPF</dt><dd>{person.cpf}</dd></div>
+          <div className="field-row"><dt>RG</dt><dd>{person.rg}</dd></div>
+          <div className="field-row"><dt>Idade</dt><dd>{person.age} anos</dd></div>
+          <div className="field-row"><dt>Sexo</dt><dd>{formatValue(person.sex, "sex")}</dd></div>
+          <div className="field-row"><dt>Cor</dt><dd>{person.color || "—"}</dd></div>
+        </dl>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   Criminal Records — Shared Detail Component
+   ================================================================ */
+
+function CriminalRecordDetails({ record }) {
+  return (
+    <div className="record-details-grid">
+      <SuspectInfo personId={record.person_id} />
+      <div className="record-detail-section">
+        <h4><FileSearch size={16} aria-hidden="true" /> Informações do Crime</h4>
+        <dl>
+          <div className="field-row"><dt>Código</dt><dd>{record.code}</dd></div>
+          <div className="field-row"><dt>Título</dt><dd>{record.title}</dd></div>
+          <div className="field-row"><dt>Tipo</dt><dd>{record.crime_type}</dd></div>
+          <div className="field-row"><dt>Categoria</dt><dd>{record.crime_category || "—"}</dd></div>
+          <div className="field-row"><dt>Gravidade</dt><dd>{record.crime_severity || "—"}</dd></div>
+          <div className="field-row"><dt>Status</dt><dd>{record.crime_status}</dd></div>
+        </dl>
+      </div>
+      <div className="record-detail-section">
+        <h4><MapPin size={16} aria-hidden="true" /> Ocorrência</h4>
+        <dl>
+          <div className="field-row"><dt>Data</dt><dd>{record.occurrence_date ? dateFormatter.format(new Date(`${record.occurrence_date}T00:00:00Z`)) : "—"}</dd></div>
+          <div className="field-row"><dt>Hora</dt><dd>{record.occurrence_time || "—"}</dd></div>
+          <div className="field-row"><dt>Local</dt><dd>{record.occurrence_location || "—"}</dd></div>
+          <div className="field-row"><dt>Cidade</dt><dd>{record.occurrence_city ? `${record.occurrence_city}${record.occurrence_state ? " - " + record.occurrence_state : ""}` : "—"}</dd></div>
+        </dl>
+      </div>
+      <div className="record-detail-section">
+        <h4><UserRound size={16} aria-hidden="true" /> Vítima</h4>
+        <dl>
+          <div className="field-row"><dt>Nome</dt><dd>{record.victim_name || "—"}</dd></div>
+          <div className="field-row"><dt>CPF/CNPJ</dt><dd>{formatDocument(record.victim_cpf)}</dd></div>
+          <div className="field-row"><dt>Tipo</dt><dd>{record.victim_type || "—"}</dd></div>
+        </dl>
+      </div>
+      <div className="record-detail-section">
+        <h4><Shield size={16} aria-hidden="true" /> Responsável</h4>
+        <dl>
+          <div className="field-row"><dt>Autoridade</dt><dd>{record.responsible_authority || "—"}</dd></div>
+          <div className="field-row"><dt>Unidade</dt><dd>{record.responsible_unit || "—"}</dd></div>
+        </dl>
+      </div>
+      {record.crime_description && (
+        <div className="record-detail-section record-detail-section--full">
+          <h4>Descrição</h4>
+          <p className="record-description">{record.crime_description}</p>
+        </div>
+      )}
+      {record.notes && (
+        <div className="record-detail-section record-detail-section--full">
+          <h4>Observações</h4>
+          <p className="record-description">{record.notes}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   Criminal Records — Row (for the listing page)
+   ================================================================ */
+
+function CriminalRecordRow({ record, expanded, onToggle }) {
+  return (
+    <div className={`criminal-row${expanded ? " criminal-row--expanded" : ""}`}>
+      <button className="criminal-row__summary" type="button" onClick={onToggle}>
+        <span className="criminal-row__code">{record.code}</span>
+        <span className="criminal-row__info">
+          <strong>{record.title}</strong>
+          <small>{record.crime_type}{record.crime_category ? ` · ${record.crime_category}` : ""}</small>
+        </span>
+        <span className="criminal-row__badges">
+          <span className={`severity-badge severity-badge--${severityClass(record.crime_severity)}`}>
+            {record.crime_severity || "—"}
+          </span>
+          <span className={`status-badge status-badge--${statusClass(record.crime_status)}`}>
+            {record.crime_status}
+          </span>
+        </span>
+        <span className="criminal-row__date">
+          <CalendarDays size={14} aria-hidden="true" />
+          {record.occurrence_date ? dateFormatter.format(new Date(`${record.occurrence_date}T00:00:00Z`)) : "—"}
+        </span>
+        <span className={`criminal-row__chevron${expanded ? " criminal-row__chevron--up" : ""}`}>
+          <ChevronDown size={18} />
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="criminal-row__details">
+          <CriminalRecordDetails record={record} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   Criminal Records — Listing Page (all records)
+   ================================================================ */
+
+function CriminalRecordsPage() {
+  const [records, setRecords] = useState([]);
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [sortField, setSortField] = useState("code");
+  const [sortDirection, setSortDirection] = useState("asc");
+  const [expandedId, setExpandedId] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    getAllCriminalRecords()
+      .then((result) => {
+        if (!active) return;
+        setRecords(result);
+        setError("");
+      })
+      .catch((err) => {
+        if (!active) return;
+        setError(err.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
+
+  const filteredAndSorted = useMemo(() => {
+    let filtered = records;
+    const search = normalize(query);
+
+    if (search) {
+      filtered = records.filter((r) =>
+        [r.code, r.title, r.crime_type, r.crime_category, r.crime_status, r.crime_severity, r.occurrence_city, r.occurrence_state, r.victim_name].some(
+          (v) => normalize(v).includes(search)
+        )
+      );
+    }
+
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+      if (sortField === "code") {
+        comparison = (a.code || "").localeCompare(b.code || "");
+      } else if (sortField === "occurrence_date") {
+        const dateA = a.occurrence_date || "";
+        const dateB = b.occurrence_date || "";
+        comparison = dateA.localeCompare(dateB);
+      }
+      return sortDirection === "desc" ? -comparison : comparison;
+    });
+  }, [records, query, sortField, sortDirection]);
+
+  function handleSort(field) {
+    if (sortField === field) {
+      setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  }
+
+  function toggleExpand(id) {
+    setExpandedId((prev) => (prev === id ? null : id));
+  }
+
+  return (
+    <div className="criminal-page">
+      <div className="criminal-page__header">
+        <div>
+          <span className="agency-label">Registros criminais</span>
+          <h1>Fichas Criminais</h1>
+        </div>
+        <div className="counter">
+          <FileSearch size={18} aria-hidden="true" />
+          <strong>{filteredAndSorted.length}</strong>
+        </div>
+      </div>
+
+      <label className="search-box">
+        <Search size={18} aria-hidden="true" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar por código, título, tipo, cidade..."
+          type="search"
+        />
+      </label>
+
+      <div className="criminal-sort-bar">
+        <span className="criminal-sort-bar__label">Ordenar por:</span>
+        <button
+          className={`sort-btn${sortField === "code" ? " sort-btn--active" : ""}`}
+          type="button"
+          onClick={() => handleSort("code")}
+        >
+          Código
+          {sortField === "code" && (
+            sortDirection === "asc" ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+          )}
+        </button>
+        <button
+          className={`sort-btn${sortField === "occurrence_date" ? " sort-btn--active" : ""}`}
+          type="button"
+          onClick={() => handleSort("occurrence_date")}
+        >
+          Data da ocorrência
+          {sortField === "occurrence_date" && (
+            sortDirection === "asc" ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+          )}
+        </button>
+      </div>
+
+      {error && <StatusMessage type="error">{error}</StatusMessage>}
+
+      <div className="criminal-list">
+        {loading &&
+          Array.from({ length: 5 }).map((_, i) => (
+            <div className="criminal-row criminal-row--loading" key={i}>
+              <div className="criminal-row__summary">
+                <div className="skeleton-line" style={{ width: "80px" }} />
+                <div className="skeleton-line skeleton-line--wide" />
+                <div className="skeleton-line" style={{ width: "120px" }} />
+              </div>
+            </div>
+          ))}
+
+        {!loading &&
+          filteredAndSorted.map((record) => (
+            <CriminalRecordRow
+              key={record.id}
+              record={record}
+              expanded={expandedId === record.id}
+              onToggle={() => toggleExpand(record.id)}
+            />
+          ))}
+
+        {!loading && filteredAndSorted.length === 0 && !error && (
+          <div className="empty-list">
+            <FileSearch size={32} aria-hidden="true" />
+            <strong>Nenhum registro encontrado</strong>
+            <span>Ajuste os termos da busca.</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   Criminal Records — Person-specific Page
+   ================================================================ */
+
+function PersonCriminalPage({ person, onBack }) {
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+
+  useEffect(() => {
+    if (!person?.cpf) return;
+    let active = true;
+    setLoading(true);
+    getCriminalRecordByCpf(person.cpf)
+      .then((result) => {
+        if (!active) return;
+        setRecords(result);
+        setError("");
+      })
+      .catch((err) => {
+        if (!active) return;
+        setError(err.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, [person?.cpf]);
+
+  function toggleExpand(id) {
+    setExpandedId((prev) => (prev === id ? null : id));
+  }
+
+  return (
+    <div className="criminal-page">
+      <button className="back-button" type="button" onClick={onBack}>
+        <ArrowLeft size={18} aria-hidden="true" />
+        Voltar para consulta
+      </button>
+
+      <div className="person-criminal-header">
+        <PersonPhoto compact />
+        <div className="person-criminal-header__info">
+          <span className="agency-label">Ficha criminal</span>
+          <h1>{person?.name}</h1>
+          <p>CPF {person?.cpf}</p>
+        </div>
+        <div className="counter">
+          <FileSearch size={18} aria-hidden="true" />
+          <strong>{records.length}</strong>
+        </div>
+      </div>
+
+      {error && <StatusMessage type="error">{error}</StatusMessage>}
+
+      <div className="criminal-list">
+        {loading &&
+          Array.from({ length: 3 }).map((_, i) => (
+            <div className="criminal-row criminal-row--loading" key={i}>
+              <div className="criminal-row__summary">
+                <div className="skeleton-line" style={{ width: "80px" }} />
+                <div className="skeleton-line skeleton-line--wide" />
+                <div className="skeleton-line" style={{ width: "120px" }} />
+              </div>
+            </div>
+          ))}
+
+        {!loading &&
+          records.map((record) => (
+            <CriminalRecordRow
+              key={record.id}
+              record={record}
+              expanded={expandedId === record.id}
+              onToggle={() => toggleExpand(record.id)}
+            />
+          ))}
+
+        {!loading && records.length === 0 && !error && (
+          <div className="empty-list">
+            <BadgeCheck size={32} aria-hidden="true" />
+            <strong>Nenhum registro criminal</strong>
+            <span>Esta pessoa não possui registros criminais.</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
    App Shell
    ================================================================ */
 
@@ -653,11 +1098,21 @@ function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [peoplePageMounted, setPeoplePageMounted] = useState(false);
+  const [criminalPerson, setCriminalPerson] = useState(null);
 
   function handleNavigate(page) {
     if (page === "people") setPeoplePageMounted(true);
     setCurrentPage(page);
     setSidebarOpen(false);
+  }
+
+  function handleViewCriminal(person) {
+    setCriminalPerson(person);
+    setCurrentPage("personCriminal");
+  }
+
+  function handleBackFromCriminal() {
+    setCurrentPage("people");
   }
 
   return (
@@ -692,8 +1147,12 @@ function App() {
           {currentPage === "home" && <HomePage onNavigate={handleNavigate} />}
           {peoplePageMounted && (
             <div style={currentPage !== "people" ? { display: "none" } : undefined}>
-              <PeopleSearch />
+              <PeopleSearch onViewCriminal={handleViewCriminal} />
             </div>
+          )}
+          {currentPage === "criminal" && <CriminalRecordsPage />}
+          {currentPage === "personCriminal" && criminalPerson && (
+            <PersonCriminalPage person={criminalPerson} onBack={handleBackFromCriminal} />
           )}
         </main>
 

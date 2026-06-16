@@ -30,10 +30,16 @@ export function getPersonByCpf(cpf) {
   return request(`/person/${encodeURIComponent(cpf)}`);
 }
 
-export function getCriminalRecord(cpf) {
-  return Promise.reject(
-    new Error(`Módulo de ficha criminal ainda não implementado para o CPF ${cpf}.`),
-  );
+export function getAllCriminalRecords() {
+  return request("/criminal-records");
+}
+
+export function getCriminalRecordByCpf(cpf) {
+  return request(`/criminal-records/${encodeURIComponent(cpf)}`);
+}
+
+export function getPersonById(id) {
+  return request(`/person/id/${encodeURIComponent(id)}`);
 }
 
 export { API_BASE_URL };

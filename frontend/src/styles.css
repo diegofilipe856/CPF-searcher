@@ -1151,3 +1151,496 @@ button {
     border-radius: 12px;
   }
 }
+
+/* ================================================================
+   Criminal Records — Page Layout
+   ================================================================ */
+
+.criminal-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 28px 20px;
+  animation: pageFadeIn 0.3s ease;
+}
+
+.criminal-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.criminal-page__header h1 {
+  margin: 4px 0 0;
+  font-size: 1.55rem;
+  color: #132821;
+  line-height: 1.18;
+}
+
+/* ================================================================
+   Criminal Records — Sort Bar
+   ================================================================ */
+
+.criminal-sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 20px;
+  flex-wrap: wrap;
+}
+
+.criminal-sort-bar__label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #6d7f76;
+}
+
+.sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #cbd8d0;
+  border-radius: 999px;
+  background: #fbfdfb;
+  color: #527064;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.sort-btn:hover {
+  border-color: #1f6f5b;
+  color: #173f35;
+  background: #eef5f0;
+}
+
+.sort-btn--active {
+  border-color: #1f6f5b;
+  background: rgba(31, 111, 91, 0.1);
+  color: #1f6f5b;
+}
+
+/* ================================================================
+   Criminal Records — List & Rows
+   ================================================================ */
+
+.criminal-list {
+  display: grid;
+  gap: 10px;
+}
+
+.criminal-row {
+  border: 1px solid #d8e2dc;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 200ms ease;
+  animation: fadeSlideUp 0.4s ease backwards;
+}
+
+.criminal-row:nth-child(n) {
+  animation-delay: calc(0.03s * var(--i, 0));
+}
+
+.criminal-row:hover {
+  border-color: #1f6f5b;
+  box-shadow: 0 8px 20px rgba(31, 111, 91, 0.08);
+}
+
+.criminal-row--expanded {
+  border-color: #1f6f5b;
+  box-shadow: 0 12px 28px rgba(31, 111, 91, 0.12);
+}
+
+.criminal-row--loading {
+  pointer-events: none;
+}
+
+.criminal-row--loading .criminal-row__summary {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.criminal-row__summary {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 110px 1fr auto auto 28px;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.criminal-row__summary:hover {
+  background: #f9fcfa;
+}
+
+.criminal-row__code {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #1f6f5b;
+  background: rgba(31, 111, 91, 0.08);
+  padding: 5px 10px;
+  border-radius: 6px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.criminal-row__info {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.criminal-row__info strong {
+  font-size: 0.95rem;
+  color: #132821;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.criminal-row__info small {
+  font-size: 0.82rem;
+  color: #6d7f76;
+  font-weight: 600;
+}
+
+.criminal-row__badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.criminal-row__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #527064;
+  white-space: nowrap;
+}
+
+.criminal-row__chevron {
+  display: grid;
+  place-items: center;
+  color: #8aa899;
+  transition: transform 250ms ease;
+}
+
+.criminal-row__chevron--up {
+  transform: rotate(-180deg);
+}
+
+.criminal-row__details {
+  padding: 0 18px 20px;
+  border-top: 1px solid #e2e9e5;
+  animation: fadeSlideUp 0.25s ease;
+}
+
+/* ================================================================
+   Criminal Records — Severity & Status Badges
+   ================================================================ */
+
+.severity-badge,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+/* Severity */
+.severity-badge--high {
+  background: rgba(200, 45, 45, 0.1);
+  color: #913b2d;
+  border-color: rgba(200, 45, 45, 0.2);
+}
+
+.severity-badge--medium {
+  background: rgba(216, 169, 35, 0.12);
+  color: #8a6a0a;
+  border-color: rgba(216, 169, 35, 0.25);
+}
+
+.severity-badge--low {
+  background: rgba(34, 139, 34, 0.1);
+  color: #1a6b1a;
+  border-color: rgba(34, 139, 34, 0.2);
+}
+
+.severity-badge--default {
+  background: #f1f5f2;
+  color: #527064;
+  border-color: #dbe5df;
+}
+
+/* Status */
+.status-badge--investigating {
+  background: rgba(37, 99, 235, 0.1);
+  color: #1e40af;
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+.status-badge--convicted {
+  background: rgba(200, 45, 45, 0.1);
+  color: #913b2d;
+  border-color: rgba(200, 45, 45, 0.2);
+}
+
+.status-badge--acquitted {
+  background: rgba(34, 139, 34, 0.1);
+  color: #1a6b1a;
+  border-color: rgba(34, 139, 34, 0.2);
+}
+
+.status-badge--closed {
+  background: rgba(107, 114, 128, 0.1);
+  color: #4b5563;
+  border-color: rgba(107, 114, 128, 0.2);
+}
+
+.status-badge--pending {
+  background: rgba(216, 169, 35, 0.12);
+  color: #8a6a0a;
+  border-color: rgba(216, 169, 35, 0.25);
+}
+
+.status-badge--default {
+  background: #f1f5f2;
+  color: #527064;
+  border-color: #dbe5df;
+}
+
+/* ================================================================
+   Criminal Records — Suspect Info
+   ================================================================ */
+
+.record-detail-section--suspect {
+  grid-column: 1 / -1;
+  border-top-color: #173f35;
+}
+
+.suspect-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 14px 16px;
+  background: #f8faf8;
+  border: 1px solid #e2e9e5;
+  border-radius: 8px;
+}
+
+.suspect-card dl {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 20px;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.suspect-card .person-photo--compact {
+  width: 56px;
+  flex: 0 0 auto;
+}
+
+.suspect-loading {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  background: #f8faf8;
+  border: 1px solid #e2e9e5;
+  border-radius: 8px;
+}
+
+.suspect-unavailable {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #6d7f76;
+  font-weight: 600;
+  font-style: italic;
+}
+
+/* ================================================================
+   Criminal Records — Detail Grid
+   ================================================================ */
+
+.record-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 18px;
+}
+
+.record-detail-section {
+  min-width: 0;
+  border-top: 3px solid #d8a923;
+  padding-top: 12px;
+}
+
+.record-detail-section--full {
+  grid-column: 1 / -1;
+  border-top-color: #1f6f5b;
+}
+
+.record-detail-section h4 {
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+  color: #173f35;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.record-detail-section dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.record-description {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: #3a4f47;
+  background: #f8faf8;
+  border: 1px solid #e2e9e5;
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+/* ================================================================
+   Criminal Records — Back Button
+   ================================================================ */
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  margin-bottom: 20px;
+  border: 1px solid #cbd8d0;
+  border-radius: 8px;
+  background: #fbfdfb;
+  color: #173f35;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.back-button:hover {
+  background: #eef5f0;
+  border-color: #1f6f5b;
+  color: #1f6f5b;
+}
+
+/* ================================================================
+   Criminal Records — Person Criminal Header
+   ================================================================ */
+
+.person-criminal-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 22px;
+  margin-bottom: 22px;
+  background: #ffffff;
+  border: 1px solid #d8e2dc;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(27, 37, 32, 0.06);
+}
+
+.person-criminal-header__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.person-criminal-header__info h1 {
+  margin: 4px 0 6px;
+  font-size: 1.45rem;
+  color: #132821;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.person-criminal-header__info p {
+  margin: 0;
+  color: #1f6f5b;
+  font-weight: 800;
+  font-size: 0.92rem;
+}
+
+/* ================================================================
+   Responsive — Criminal Records (≤ 1080px)
+   ================================================================ */
+
+@media (max-width: 1080px) {
+  .criminal-row__summary {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .criminal-row__code {
+    justify-self: start;
+  }
+
+  .criminal-row__badges {
+    justify-self: start;
+  }
+
+  .criminal-row__chevron {
+    display: none;
+  }
+
+  .record-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================================================
+   Responsive — Criminal Records Mobile (≤ 720px)
+   ================================================================ */
+
+@media (max-width: 720px) {
+  .criminal-page {
+    padding: 18px;
+  }
+
+  .criminal-page__header {
+    flex-direction: column;
+  }
+
+  .person-criminal-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 18px;
+  }
+
+  .person-criminal-header .counter {
+    align-self: center;
+  }
+
+  .criminal-sort-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
