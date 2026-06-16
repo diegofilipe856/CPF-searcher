@@ -1,8 +1,10 @@
+import uuid
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.services import criminal_records_service
-from app.domain.schemas.criminal_records_response import CriminalRecordResponse
+from app.domain.schemas.criminal_records_response import CriminalRecordResponse, CriminalRecordUpdate
 
 
 router = APIRouter(prefix="/criminal-records", tags=["criminal-records"])
@@ -16,3 +18,8 @@ def list_criminal_records(db: Session = Depends(get_db)):
 def get_criminal_record(cpf: str, db: Session = Depends(get_db)):
     records = criminal_records_service.get_criminal_record_by_cpf(db, cpf)
     return records
+
+@router.put("/{record_id}", response_model=CriminalRecordUpdate)
+def update_criminal_record(record_id: uuid.UUID, updated_record: CriminalRecordUpdate, db: Session = Depends(get_db)):
+    updated_record_db = criminal_records_service.update_criminal_record(db, record_id, updated_record)
+    return updated_record_db
