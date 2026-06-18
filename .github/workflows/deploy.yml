@@ -9,15 +9,26 @@ jobs:
   deploy:
     name: Deploy App
     runs-on: self-hosted # Indica que vai rodar no seu runner próprio
-    
+
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
         with:
           clean: false # Mantém arquivos gerados no runner (como .env) se necessário
 
+      - name: Gerar .env do backend
+        env:
+          API_KEY_VALUE: ${{ secrets.API_KEY || vars.API_KEY }}
+        run: |
+          if [ -z "$API_KEY_VALUE" ]; then
+            echo "API_KEY not found in GitHub secrets or variables" >&2
+            exit 1
+          fi
+
+          printf 'API_KEY=%s\n' "$API_KEY_VALUE" > .env
+
       - name: Subir Infraestrutura (Banco + Backend)
-        run: docker compose up -d --build
+        run: docker compose --env-file .env up -d --build
 
       - name: Instalar e Buildar Frontend
         working-directory: ./frontend
