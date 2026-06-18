@@ -1,24 +1,24 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.domain.criminal_records import CriminalRecords
 from app.domain.person import Person
-from app.shared.helpers.format_cpf import format_cpf
 import uuid
 
 def get_all_criminal_records(db: Session):
     return db.query(CriminalRecords).all()
 
 def get_criminal_record_by_cpf(db: Session, cpf: str):
-    formatted_cpf = format_cpf(cpf)
+    cpf_digits = ''.join(char for char in cpf if char.isdigit())
 
     suspect_person = (
         db.query(Person)
-        .filter(Person.cpf == formatted_cpf)
+        .filter(func.regexp_replace(Person.cpf, r'\D', '', 'g') == cpf_digits)
         .first()
     )
     suspect_registries = db.query(CriminalRecords).filter(CriminalRecords.person_id == suspect_person.id).all() if suspect_person else []
     victim_registries = (
         db.query(CriminalRecords)
-        .filter(CriminalRecords.victim_cpf == formatted_cpf)
+        .filter(func.regexp_replace(CriminalRecords.victim_cpf, r'\D', '', 'g') == cpf_digits)
         .all()
     )
     return suspect_registries + victim_registries
