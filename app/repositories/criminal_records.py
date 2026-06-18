@@ -22,6 +22,9 @@ def update_criminal_record(db: Session, record_id: uuid.UUID, updated_record: Cr
         db.refresh(record)
     return record
 
+def find_duplicate_criminal_record(db: Session, record_data: dict):
+    return db.query(CriminalRecords).filter_by(**record_data).first()
+
 def add_criminal_record(db: Session, record: CriminalRecords):
     db.add(record)
     db.commit()
