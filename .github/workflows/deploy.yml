@@ -18,12 +18,10 @@ jobs:
 
       - name: Gerar .env do backend
         env:
-          API_KEY_SECRET: ${{ secrets.API_KEY }}
+          API_KEY_VALUE: ${{ secrets.API_KEY || vars.API_KEY }}
         run: |
-          API_KEY_VALUE="${API_KEY:-$API_KEY_SECRET}"
-
           if [ -z "$API_KEY_VALUE" ]; then
-            echo "API_KEY not found in runner env or GitHub secret" >&2
+            echo "API_KEY not found in GitHub secrets or variables" >&2
             exit 1
           fi
 
