@@ -9,6 +9,8 @@ jobs:
   deploy:
     name: Deploy App
     runs-on: self-hosted # Indica que vai rodar no seu runner próprio
+    env:
+      API_KEY: ${{ secrets.API_KEY }}
     
     steps:
       - name: Checkout do código
