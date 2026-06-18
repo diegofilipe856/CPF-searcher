@@ -18,14 +18,16 @@ jobs:
 
       - name: Gerar .env do backend
         env:
-          API_KEY: ${{ secrets.API_KEY }}
+          API_KEY_SECRET: ${{ secrets.API_KEY }}
         run: |
-          if [ -z "$API_KEY" ]; then
-            echo "API_KEY secret is missing" >&2
+          API_KEY_VALUE="${API_KEY:-$API_KEY_SECRET}"
+
+          if [ -z "$API_KEY_VALUE" ]; then
+            echo "API_KEY not found in runner env or GitHub secret" >&2
             exit 1
           fi
 
-          printf 'API_KEY=%s\n' "$API_KEY" > .env
+          printf 'API_KEY=%s\n' "$API_KEY_VALUE" > .env
 
       - name: Subir Infraestrutura (Banco + Backend)
         run: docker compose --env-file .env up -d --build
