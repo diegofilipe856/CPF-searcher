@@ -23,3 +23,8 @@ def get_criminal_record(cpf: str, db: Session = Depends(get_db)):
 def update_criminal_record(record_id: uuid.UUID, updated_record: CriminalRecordUpdate, db: Session = Depends(get_db)):
     updated_record_db = criminal_records_service.update_criminal_record(db, record_id, updated_record)
     return updated_record_db
+
+@router.post("", response_model=CriminalRecordResponse)
+def create_criminal_record(record_data: CriminalRecordResponse, db: Session = Depends(get_db)):
+    new_record = criminal_records_service.create_criminal_record(db, record_data.dict())
+    return new_record  

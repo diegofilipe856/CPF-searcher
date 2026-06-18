@@ -21,3 +21,9 @@ def update_criminal_record(db: Session, record_id: uuid.UUID, updated_record: Cr
         db.commit()
         db.refresh(record)
     return record
+
+def add_criminal_record(db: Session, record: CriminalRecords):
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record
