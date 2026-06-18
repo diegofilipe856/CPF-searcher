@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, Date, DateTime, ForeignKey, String, Text, Time
+from sqlalchemy import Column, Date, DateTime, ForeignKey, String, Text, Time, func
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.database import Base
@@ -28,5 +28,5 @@ class CriminalRecords(Base):
     responsible_authority = Column(String(255))
     responsible_unit = Column(String(255))
     notes = Column(Text)
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

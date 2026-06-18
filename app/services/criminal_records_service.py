@@ -1,4 +1,5 @@
 from app.repositories import criminal_records
+from app.domain.criminal_records import CriminalRecords
 from ..shared.helpers.format_cpf import format_cpf
 
 def get_all_criminal_records(db):
@@ -14,6 +15,10 @@ def update_criminal_record(db, record_id, updated_record):
     return criminal_records.update_criminal_record(db, record_id, updated_record)
 
 def create_criminal_record(db, record_data):
-    if record_data.get("victim_cpf"):
-        record_data["victim_cpf"] = format_cpf(record_data["victim_cpf"])
-    return criminal_records.add_criminal_record(db, record_data)
+    record_dict = record_data.model_dump()
+
+    if record_dict.get("victim_cpf"):
+        record_dict["victim_cpf"] = format_cpf(record_dict["victim_cpf"])
+
+    record = CriminalRecords(**record_dict)
+    return criminal_records.add_criminal_record(db, record)

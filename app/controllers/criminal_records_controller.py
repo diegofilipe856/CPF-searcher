@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.services import criminal_records_service
-from app.domain.schemas.criminal_records_response import CriminalRecordResponse, CriminalRecordUpdate
+from app.domain.schemas.criminal_records_response import CriminalRecordResponse, CriminalRecordUpdate, CriminalRecordCreate
 
 
 router = APIRouter(prefix="/criminal-records", tags=["criminal-records"])
@@ -25,6 +25,6 @@ def update_criminal_record(record_id: uuid.UUID, updated_record: CriminalRecordU
     return updated_record_db
 
 @router.post("", response_model=CriminalRecordResponse)
-def create_criminal_record(record_data: CriminalRecordResponse, db: Session = Depends(get_db)):
-    new_record = criminal_records_service.create_criminal_record(db, record_data.dict())
+def create_criminal_record(record_data: CriminalRecordCreate, db: Session = Depends(get_db)):
+    new_record = criminal_records_service.create_criminal_record(db, record_data)
     return new_record  
