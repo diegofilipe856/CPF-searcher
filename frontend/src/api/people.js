@@ -42,4 +42,18 @@ export function getPersonById(id) {
   return request(`/person/id/${encodeURIComponent(id)}`);
 }
 
+export function updateCriminalRecord(recordId, data) {
+  return request(`/criminal-records/${encodeURIComponent(recordId)}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function createCriminalRecord(data) {
+  return request("/criminal-records", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 export { API_BASE_URL };

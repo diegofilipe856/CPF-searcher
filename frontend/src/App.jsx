@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   BadgeCheck,
   CalendarDays,
+  Check,
   ChevronDown,
   ChevronRight,
   ChevronUp,
@@ -17,7 +18,10 @@ import {
   Mail,
   MapPin,
   Menu,
+  Pencil,
   Phone,
+  Plus,
+  Save,
   Search,
   Server,
   Shield,
@@ -29,11 +33,13 @@ import {
 import defaultProfile from "./assets/default-profile.svg";
 import {
   API_BASE_URL,
+  createCriminalRecord,
   getAllCriminalRecords,
   getCriminalRecordByCpf,
   getPersonById,
   getPeople,
   getPersonByCpf,
+  updateCriminalRecord,
 } from "./api/people";
 
 /* ================================================================
@@ -809,10 +815,391 @@ function CriminalRecordDetails({ record }) {
 }
 
 /* ================================================================
+   Criminal Records — Form Modal (create & edit)
+   ================================================================ */
+
+const EMPTY_FORM = {
+  person_id: "",
+  title: "",
+  crime_type: "",
+  crime_category: "",
+  crime_status: "",
+  crime_severity: "",
+  occurrence_date: "",
+  occurrence_time: "",
+  occurrence_location: "",
+  occurrence_city: "",
+  occurrence_state: "",
+  victim_name: "",
+  victim_cpf: "",
+  victim_type: "",
+  crime_description: "",
+  responsible_authority: "",
+  responsible_unit: "",
+  notes: "",
+};
+
+const BRAZILIAN_STATES = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
+  "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+];
+
+function CriminalRecordFormModal({ open, onClose, onSaved, record, fixedPersonId }) {
+  const isEditing = Boolean(record);
+  const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setApiError("");
+    setErrors({});
+    setSuccess(false);
+    setSaving(false);
+
+    if (record) {
+      setForm({
+        person_id: record.person_id || "",
+        title: record.title || "",
+        crime_type: record.crime_type || "",
+        crime_category: record.crime_category || "",
+        crime_status: record.crime_status || "",
+        crime_severity: record.crime_severity || "",
+        occurrence_date: record.occurrence_date || "",
+        occurrence_time: record.occurrence_time ? record.occurrence_time.slice(0, 5) : "",
+        occurrence_location: record.occurrence_location || "",
+        occurrence_city: record.occurrence_city || "",
+        occurrence_state: record.occurrence_state || "",
+        victim_name: record.victim_name || "",
+        victim_cpf: record.victim_cpf || "",
+        victim_type: record.victim_type || "",
+        crime_description: record.crime_description || "",
+        responsible_authority: record.responsible_authority || "",
+        responsible_unit: record.responsible_unit || "",
+        notes: record.notes || "",
+      });
+    } else {
+      setForm({ ...EMPTY_FORM, person_id: fixedPersonId || "" });
+    }
+  }, [open, record, fixedPersonId]);
+
+  if (!open) return null;
+
+  function handleChange(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
+    }
+  }
+
+  function validate() {
+    const errs = {};
+    if (!isEditing && !form.person_id.trim()) errs.person_id = "ID da pessoa é obrigatório.";
+    if (!form.title.trim()) errs.title = "Título é obrigatório.";
+    if (!form.crime_type.trim()) errs.crime_type = "Tipo do crime é obrigatório.";
+    if (!form.crime_status.trim()) errs.crime_status = "Status é obrigatório.";
+    return errs;
+  }
+
+  function buildPayload() {
+    const payload = {};
+    for (const [key, value] of Object.entries(form)) {
+      if (isEditing && key === "person_id") continue;
+      const trimmed = typeof value === "string" ? value.trim() : value;
+      if (trimmed !== "" && trimmed !== null && trimmed !== undefined) {
+        payload[key] = trimmed;
+      } else if (!isEditing && (key === "person_id" || key === "title" || key === "crime_type" || key === "crime_status")) {
+        payload[key] = trimmed;
+      } else {
+        payload[key] = null;
+      }
+    }
+    return payload;
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+
+    setSaving(true);
+    setApiError("");
+
+    try {
+      const payload = buildPayload();
+      if (isEditing) {
+        await updateCriminalRecord(record.id, payload);
+      } else {
+        await createCriminalRecord(payload);
+      }
+      setSuccess(true);
+      setTimeout(() => {
+        onSaved();
+        onClose();
+      }, 800);
+    } catch (err) {
+      setApiError(err.message || "Erro ao salvar o registro.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function RequiredMark() {
+    return <span className="required-mark">*</span>;
+  }
+
+  return (
+    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal-container">
+        <div className="modal-header">
+          <div className="modal-header__info">
+            <span className="agency-label">{isEditing ? "Editar registro" : "Novo registro"}</span>
+            <h2>{isEditing ? "Editar Registro Criminal" : "Criar Registro Criminal"}</h2>
+            {isEditing && <p>Código: {record.code}</p>}
+          </div>
+          <button className="modal-close-btn" type="button" onClick={onClose} aria-label="Fechar">
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body">
+            {apiError && <StatusMessage type="error">{apiError}</StatusMessage>}
+            {success && <StatusMessage type="info">Registro salvo com sucesso!</StatusMessage>}
+
+            {/* Person ID — only for creation */}
+            {!isEditing && !fixedPersonId && (
+              <div className="form-section">
+                <h4 className="form-section__title"><Fingerprint size={16} aria-hidden="true" /> Pessoa</h4>
+                <div className="form-grid">
+                  <div className={`form-field form-field--full${errors.person_id ? " form-field--error" : ""}`}>
+                    <label>ID da Pessoa <RequiredMark /></label>
+                    <input
+                      type="text"
+                      value={form.person_id}
+                      onChange={(e) => handleChange("person_id", e.target.value)}
+                      placeholder="UUID da pessoa cadastrada"
+                    />
+                    {errors.person_id && <span className="form-field__error-text">{errors.person_id}</span>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Crime Info */}
+            <div className="form-section">
+              <h4 className="form-section__title"><FileSearch size={16} aria-hidden="true" /> Informações do Crime</h4>
+              <div className="form-grid">
+                <div className={`form-field form-field--full${errors.title ? " form-field--error" : ""}`}>
+                  <label>Título <RequiredMark /></label>
+                  <input
+                    type="text"
+                    value={form.title}
+                    onChange={(e) => handleChange("title", e.target.value)}
+                    placeholder="Ex: Furto qualificado"
+                  />
+                  {errors.title && <span className="form-field__error-text">{errors.title}</span>}
+                </div>
+                <div className={`form-field${errors.crime_type ? " form-field--error" : ""}`}>
+                  <label>Tipo <RequiredMark /></label>
+                  <input
+                    type="text"
+                    value={form.crime_type}
+                    onChange={(e) => handleChange("crime_type", e.target.value)}
+                    placeholder="Ex: Crime contra o patrimônio"
+                  />
+                  {errors.crime_type && <span className="form-field__error-text">{errors.crime_type}</span>}
+                </div>
+                <div className="form-field">
+                  <label>Categoria</label>
+                  <input
+                    type="text"
+                    value={form.crime_category}
+                    onChange={(e) => handleChange("crime_category", e.target.value)}
+                    placeholder="Ex: Furto"
+                  />
+                </div>
+                <div className={`form-field${errors.crime_status ? " form-field--error" : ""}`}>
+                  <label>Status <RequiredMark /></label>
+                  <select value={form.crime_status} onChange={(e) => handleChange("crime_status", e.target.value)}>
+                    <option value="">Selecione...</option>
+                    <option value="Under Investigation">Em investigação</option>
+                    <option value="Convicted">Condenado</option>
+                    <option value="Acquitted">Absolvido</option>
+                    <option value="Pending">Pendente</option>
+                    <option value="Closed">Encerrado</option>
+                  </select>
+                  {errors.crime_status && <span className="form-field__error-text">{errors.crime_status}</span>}
+                </div>
+                <div className="form-field">
+                  <label>Gravidade</label>
+                  <select value={form.crime_severity} onChange={(e) => handleChange("crime_severity", e.target.value)}>
+                    <option value="">Selecione...</option>
+                    <option value="High">Alta</option>
+                    <option value="Medium">Média</option>
+                    <option value="Low">Baixa</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Occurrence */}
+            <div className="form-section">
+              <h4 className="form-section__title"><MapPin size={16} aria-hidden="true" /> Ocorrência</h4>
+              <div className="form-grid form-grid--three">
+                <div className="form-field">
+                  <label>Data</label>
+                  <input
+                    type="date"
+                    value={form.occurrence_date}
+                    onChange={(e) => handleChange("occurrence_date", e.target.value)}
+                  />
+                </div>
+                <div className="form-field">
+                  <label>Hora</label>
+                  <input
+                    type="time"
+                    value={form.occurrence_time}
+                    onChange={(e) => handleChange("occurrence_time", e.target.value)}
+                  />
+                </div>
+                <div className="form-field">
+                  <label>Estado</label>
+                  <select value={form.occurrence_state} onChange={(e) => handleChange("occurrence_state", e.target.value)}>
+                    <option value="">UF</option>
+                    {BRAZILIAN_STATES.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
+                  </select>
+                </div>
+                <div className="form-field">
+                  <label>Cidade</label>
+                  <input
+                    type="text"
+                    value={form.occurrence_city}
+                    onChange={(e) => handleChange("occurrence_city", e.target.value)}
+                    placeholder="Ex: São Paulo"
+                  />
+                </div>
+                <div className="form-field form-field--full">
+                  <label>Local</label>
+                  <input
+                    type="text"
+                    value={form.occurrence_location}
+                    onChange={(e) => handleChange("occurrence_location", e.target.value)}
+                    placeholder="Ex: Rua das Flores, 123"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Victim */}
+            <div className="form-section">
+              <h4 className="form-section__title"><UserRound size={16} aria-hidden="true" /> Vítima</h4>
+              <div className="form-grid form-grid--three">
+                <div className="form-field">
+                  <label>Nome</label>
+                  <input
+                    type="text"
+                    value={form.victim_name}
+                    onChange={(e) => handleChange("victim_name", e.target.value)}
+                    placeholder="Nome da vítima"
+                  />
+                </div>
+                <div className="form-field">
+                  <label>CPF/CNPJ</label>
+                  <input
+                    type="text"
+                    value={form.victim_cpf}
+                    onChange={(e) => handleChange("victim_cpf", e.target.value)}
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+                <div className="form-field">
+                  <label>Tipo</label>
+                  <input
+                    type="text"
+                    value={form.victim_type}
+                    onChange={(e) => handleChange("victim_type", e.target.value)}
+                    placeholder="Ex: Pessoa física"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Responsible */}
+            <div className="form-section">
+              <h4 className="form-section__title"><Shield size={16} aria-hidden="true" /> Responsável</h4>
+              <div className="form-grid">
+                <div className="form-field">
+                  <label>Autoridade</label>
+                  <input
+                    type="text"
+                    value={form.responsible_authority}
+                    onChange={(e) => handleChange("responsible_authority", e.target.value)}
+                    placeholder="Ex: Delegado João Silva"
+                  />
+                </div>
+                <div className="form-field">
+                  <label>Unidade</label>
+                  <input
+                    type="text"
+                    value={form.responsible_unit}
+                    onChange={(e) => handleChange("responsible_unit", e.target.value)}
+                    placeholder="Ex: 1ª Delegacia de Polícia"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Description & Notes */}
+            <div className="form-section">
+              <h4 className="form-section__title"><FileSearch size={16} aria-hidden="true" /> Descrição e Observações</h4>
+              <div className="form-grid">
+                <div className="form-field form-field--full">
+                  <label>Descrição do crime</label>
+                  <textarea
+                    value={form.crime_description}
+                    onChange={(e) => handleChange("crime_description", e.target.value)}
+                    placeholder="Descreva os detalhes do crime..."
+                    rows={3}
+                  />
+                </div>
+                <div className="form-field form-field--full">
+                  <label>Observações</label>
+                  <textarea
+                    value={form.notes}
+                    onChange={(e) => handleChange("notes", e.target.value)}
+                    placeholder="Observações adicionais..."
+                    rows={2}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="modal-footer">
+            <button type="button" className="btn btn--secondary" onClick={onClose} disabled={saving}>
+              Cancelar
+            </button>
+            <button type="submit" className={`btn ${success ? "btn--success" : "btn--primary"}`} disabled={saving || success}>
+              {success ? <><Check size={18} /> Salvo!</> : saving ? "Salvando..." : isEditing ? <><Save size={18} /> Salvar alterações</> : <><Plus size={18} /> Criar registro</>}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
    Criminal Records — Row (for the listing page)
    ================================================================ */
 
-function CriminalRecordRow({ record, expanded, onToggle }) {
+function CriminalRecordRow({ record, expanded, onToggle, onEdit }) {
   return (
     <div className={`criminal-row${expanded ? " criminal-row--expanded" : ""}`}>
       <button className="criminal-row__summary" type="button" onClick={onToggle}>
@@ -841,6 +1228,14 @@ function CriminalRecordRow({ record, expanded, onToggle }) {
       {expanded && (
         <div className="criminal-row__details">
           <CriminalRecordDetails record={record} />
+          {onEdit && (
+            <div className="criminal-row__actions">
+              <button className="edit-btn" type="button" onClick={() => onEdit(record)}>
+                <Pencil size={14} aria-hidden="true" />
+                Editar registro
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -859,24 +1254,26 @@ function CriminalRecordsPage() {
   const [sortField, setSortField] = useState("code");
   const [sortDirection, setSortDirection] = useState("asc");
   const [expandedId, setExpandedId] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
 
-  useEffect(() => {
-    let active = true;
+  function fetchRecords() {
     setLoading(true);
     getAllCriminalRecords()
       .then((result) => {
-        if (!active) return;
         setRecords(result);
         setError("");
       })
       .catch((err) => {
-        if (!active) return;
         setError(err.message);
       })
       .finally(() => {
-        if (active) setLoading(false);
+        setLoading(false);
       });
-    return () => { active = false; };
+  }
+
+  useEffect(() => {
+    fetchRecords();
   }, []);
 
   const filteredAndSorted = useMemo(() => {
@@ -917,6 +1314,21 @@ function CriminalRecordsPage() {
     setExpandedId((prev) => (prev === id ? null : id));
   }
 
+  function handleEdit(record) {
+    setEditingRecord(record);
+    setModalOpen(true);
+  }
+
+  function handleCreate() {
+    setEditingRecord(null);
+    setModalOpen(true);
+  }
+
+  function handleModalClose() {
+    setModalOpen(false);
+    setEditingRecord(null);
+  }
+
   return (
     <div className="criminal-page">
       <div className="criminal-page__header">
@@ -924,9 +1336,15 @@ function CriminalRecordsPage() {
           <span className="agency-label">Registros criminais</span>
           <h1>Fichas Criminais</h1>
         </div>
-        <div className="counter">
-          <FileSearch size={18} aria-hidden="true" />
-          <strong>{filteredAndSorted.length}</strong>
+        <div className="criminal-page__actions">
+          <button className="btn btn--primary" type="button" onClick={handleCreate}>
+            <Plus size={18} aria-hidden="true" />
+            Novo registro
+          </button>
+          <div className="counter">
+            <FileSearch size={18} aria-hidden="true" />
+            <strong>{filteredAndSorted.length}</strong>
+          </div>
         </div>
       </div>
 
@@ -985,6 +1403,7 @@ function CriminalRecordsPage() {
               record={record}
               expanded={expandedId === record.id}
               onToggle={() => toggleExpand(record.id)}
+              onEdit={handleEdit}
             />
           ))}
 
@@ -996,6 +1415,13 @@ function CriminalRecordsPage() {
           </div>
         )}
       </div>
+
+      <CriminalRecordFormModal
+        open={modalOpen}
+        onClose={handleModalClose}
+        onSaved={fetchRecords}
+        record={editingRecord}
+      />
     </div>
   );
 }
@@ -1009,29 +1435,46 @@ function PersonCriminalPage({ person, onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
 
-  useEffect(() => {
+  function fetchRecords() {
     if (!person?.cpf) return;
-    let active = true;
     setLoading(true);
     getCriminalRecordByCpf(person.cpf)
       .then((result) => {
-        if (!active) return;
         setRecords(result);
         setError("");
       })
       .catch((err) => {
-        if (!active) return;
         setError(err.message);
       })
       .finally(() => {
-        if (active) setLoading(false);
+        setLoading(false);
       });
-    return () => { active = false; };
+  }
+
+  useEffect(() => {
+    fetchRecords();
   }, [person?.cpf]);
 
   function toggleExpand(id) {
     setExpandedId((prev) => (prev === id ? null : id));
+  }
+
+  function handleEdit(record) {
+    setEditingRecord(record);
+    setModalOpen(true);
+  }
+
+  function handleCreate() {
+    setEditingRecord(null);
+    setModalOpen(true);
+  }
+
+  function handleModalClose() {
+    setModalOpen(false);
+    setEditingRecord(null);
   }
 
   return (
@@ -1048,9 +1491,15 @@ function PersonCriminalPage({ person, onBack }) {
           <h1>{person?.name}</h1>
           <p>CPF {person?.cpf}</p>
         </div>
-        <div className="counter">
-          <FileSearch size={18} aria-hidden="true" />
-          <strong>{records.length}</strong>
+        <div className="criminal-page__actions">
+          <button className="btn btn--primary" type="button" onClick={handleCreate}>
+            <Plus size={18} aria-hidden="true" />
+            Novo registro
+          </button>
+          <div className="counter">
+            <FileSearch size={18} aria-hidden="true" />
+            <strong>{records.length}</strong>
+          </div>
         </div>
       </div>
 
@@ -1075,6 +1524,7 @@ function PersonCriminalPage({ person, onBack }) {
               record={record}
               expanded={expandedId === record.id}
               onToggle={() => toggleExpand(record.id)}
+              onEdit={handleEdit}
             />
           ))}
 
@@ -1086,6 +1536,14 @@ function PersonCriminalPage({ person, onBack }) {
           </div>
         )}
       </div>
+
+      <CriminalRecordFormModal
+        open={modalOpen}
+        onClose={handleModalClose}
+        onSaved={fetchRecords}
+        record={editingRecord}
+        fixedPersonId={person?.id}
+      />
     </div>
   );
 }
