@@ -34,11 +34,25 @@ def update_criminal_record(db: Session, record_id: uuid.UUID, updated_record: Cr
         try:
             db.commit()
             db.refresh(record)
-        except IntegrityError:
+        except IntegrityError as e:
             db.rollback()
+            error_msg = str(e.orig) if e.orig else str(e)
+            pgcode = getattr(e.orig, "pgcode", None)
+            is_unique_violation = (
+                pgcode == "23505" or 
+                "unique" in error_msg.lower() or 
+                "duplicate" in error_msg.lower() or
+                "uq_" in error_msg.lower() or
+                "key" in error_msg.lower()
+            )
+            if is_unique_violation:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Update would create a duplicate criminal record",
+                )
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Update would create a duplicate criminal record",
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Database integrity error on update: {error_msg}"
             )
     return record
 
@@ -50,9 +64,28 @@ def add_criminal_record(db: Session, record: CriminalRecords):
     except IntegrityError as e:
         db.rollback()
         error_msg = str(e.orig) if e.orig else str(e)
-        if "uq_criminal_records_code" in error_msg or "uq_criminal_records_person_crime" in error_msg:
+        pgcode = getattr(e.orig, "pgcode", None)
+        
+        is_unique_violation = (
+            pgcode == "23505" or 
+            "unique" in error_msg.lower() or 
+            "duplicate" in error_msg.lower() or
+            "uq_" in error_msg.lower() or
+            "key" in error_msg.lower()
+        )
+        
+        if is_unique_violation:
+            if "code" in error_msg:
+                detail_msg = "A criminal record with this code already exists."
+            else:
+                detail_msg = "A criminal record with this combination of person, crime type, category, victim and date already exists."
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="This criminal record already exists in the database.",
+                detail=detail_msg,
             )
+            
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Database integrity error: {error_msg}"
+        )
     return record
