@@ -1,5 +1,3 @@
-from fastapi import HTTPException, status
-
 from app.repositories import criminal_records
 from app.domain.criminal_records import CriminalRecords
 from ..shared.helpers.format_cpf import format_cpf
@@ -21,13 +19,6 @@ def create_criminal_record(db, record_data):
 
     if record_dict.get("victim_cpf"):
         record_dict["victim_cpf"] = format_cpf(record_dict["victim_cpf"])
-
-    duplicate_record = criminal_records.find_duplicate_criminal_record(db, record_dict)
-    if duplicate_record:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Criminal record already exists",
-        )
 
     record = CriminalRecords(**record_dict)
     return criminal_records.add_criminal_record(db, record)

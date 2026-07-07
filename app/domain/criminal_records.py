@@ -1,12 +1,19 @@
 import uuid
 
-from sqlalchemy import Column, Date, DateTime, ForeignKey, String, Text, Time, func
+from sqlalchemy import Column, Date, DateTime, ForeignKey, String, Text, Time, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.database import Base
 
 class CriminalRecords(Base):
     __tablename__ = "criminal_records"
+    __table_args__ = (
+        UniqueConstraint(
+            "person_id", "title", "crime_type", "crime_category",
+            "victim_cpf", "occurrence_date",
+            name="uq_criminal_records_person_crime",
+        ),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     person_id = Column(UUID(as_uuid=True), ForeignKey("people.id"), nullable=False)

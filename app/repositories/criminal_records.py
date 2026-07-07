@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
+from fastapi import HTTPException, status
 from app.domain.criminal_records import CriminalRecords
 from app.domain.person import Person
 import uuid
@@ -29,15 +31,28 @@ def update_criminal_record(db: Session, record_id: uuid.UUID, updated_record: Cr
         update_data = updated_record.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(record, field, value)
-        db.commit()
-        db.refresh(record)
+        try:
+            db.commit()
+            db.refresh(record)
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Update would create a duplicate criminal record",
+            )
     return record
-
-def find_duplicate_criminal_record(db: Session, record_data: dict):
-    return db.query(CriminalRecords).filter_by(**record_data).first()
 
 def add_criminal_record(db: Session, record: CriminalRecords):
     db.add(record)
-    db.commit()
-    db.refresh(record)
+    try:
+        db.commit()
+        db.refresh(record)
+    except IntegrityError as e:
+        db.rollback()
+        error_msg = str(e.orig) if e.orig else str(e)
+        if "uq_criminal_records_code" in error_msg or "uq_criminal_records_person_crime" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This criminal record already exists in the database.",
+            )
     return record
