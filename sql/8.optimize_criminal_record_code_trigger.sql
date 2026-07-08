@@ -1,8 +1,14 @@
-CREATE TABLE IF NOT EXISTS public.criminal_record_code_counters (
-    year INTEGER PRIMARY KEY,
-    last_number INTEGER NOT NULL DEFAULT 0
-);
+-- 1. Sincroniza a tabela de contadores com os registros existentes (caso existam)
+INSERT INTO public.criminal_record_code_counters (year, last_number)
+SELECT 
+    EXTRACT(YEAR FROM created_at)::integer AS year,
+    COALESCE(MAX((regexp_match(code, '([0-9]{4})$'))[1]::INTEGER), 0) AS last_number
+FROM public.criminal_records
+GROUP BY EXTRACT(YEAR FROM created_at)
+ON CONFLICT (year)
+DO UPDATE SET last_number = GREATEST(public.criminal_record_code_counters.last_number, EXCLUDED.last_number);
 
+-- 2. Atualiza a função do trigger para a nova lógica otimizada e atômica
 CREATE OR REPLACE FUNCTION public.generate_criminal_record_code()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -26,10 +32,3 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_generate_criminal_record_code ON public.criminal_records;
-
-CREATE TRIGGER trg_generate_criminal_record_code
-BEFORE INSERT ON public.criminal_records
-FOR EACH ROW
-EXECUTE FUNCTION public.generate_criminal_record_code();

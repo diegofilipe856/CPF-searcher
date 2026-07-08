@@ -1,7 +1,8 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from uuid import UUID
 from datetime import date, time, datetime
 from typing import Optional
+from app.shared.helpers.format_cpf import format_cpf
 
 class CriminalRecordResponse(BaseModel):
     id: UUID
@@ -29,6 +30,12 @@ class CriminalRecordResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @model_validator(mode="after")
+    def format_docs(self) -> "CriminalRecordResponse":
+        if self.victim_cpf:
+            self.victim_cpf = format_cpf(self.victim_cpf)
+        return self
+
 class CriminalRecordUpdate(BaseModel):
     title: Optional[str] = None
     crime_type: Optional[str] = None
@@ -49,6 +56,13 @@ class CriminalRecordUpdate(BaseModel):
     notes: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("victim_cpf", mode="before")
+    @classmethod
+    def clean_victim_cpf(cls, v: Optional[str]) -> Optional[str]:
+        if isinstance(v, str):
+            return "".join(char for char in v if char.isdigit())
+        return v
 
 class CriminalRecordCreate(BaseModel):
     person_id: UUID
@@ -71,3 +85,10 @@ class CriminalRecordCreate(BaseModel):
     notes: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("victim_cpf", mode="before")
+    @classmethod
+    def clean_victim_cpf(cls, v: Optional[str]) -> Optional[str]:
+        if isinstance(v, str):
+            return "".join(char for char in v if char.isdigit())
+        return v
