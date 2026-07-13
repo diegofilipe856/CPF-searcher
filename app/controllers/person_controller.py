@@ -8,7 +8,6 @@ from app.database import get_db
 from app.services import person_service
 from app.domain.schemas.person_response import PersonCreate, PersonResponse
 
-from app.auth import get_api_key
 
 router = APIRouter(prefix="/person", tags=["person"])
 
@@ -31,7 +30,7 @@ def find_person_by_id(person_id: uuid.UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Person not found")
     return person
 
-@router.post("", response_model=PersonResponse, dependencies=[Depends(get_api_key)])
+@router.post("", response_model=PersonResponse)
 def register_person(person_data: PersonCreate, db: Session = Depends(get_db)):
     person = person_service.create_person(db, person_data.model_dump())
     return person
