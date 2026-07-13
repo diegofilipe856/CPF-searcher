@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.controllers import person_controller
 from app.controllers import criminal_records_controller
+from app.controllers import auth as auth_controller
 
 app = FastAPI()
 
@@ -20,3 +21,5 @@ def read_root():
 
 app.include_router(person_controller.router)
 app.include_router(criminal_records_controller.router)
+app.include_router(auth_controller.router)
+

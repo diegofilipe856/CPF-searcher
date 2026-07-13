@@ -56,4 +56,12 @@ export function createCriminalRecord(data) {
   });
 }
 
+export function login(key, password) {
+  return request("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ key, password }),
+  });
+}
+
 export { API_BASE_URL };
+
