@@ -31,6 +31,7 @@ import {
   X,
 } from "lucide-react";
 import defaultProfile from "./assets/default-profile.svg";
+import Login from "./Login";
 import {
   API_BASE_URL,
   createCriminalRecord,
@@ -1553,10 +1554,25 @@ function PersonCriminalPage({ person, onBack }) {
    ================================================================ */
 
 function App() {
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem("ssp_user");
+    return saved ? JSON.parse(saved) : null;
+  });
   const [currentPage, setCurrentPage] = useState("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [peoplePageMounted, setPeoplePageMounted] = useState(false);
   const [criminalPerson, setCriminalPerson] = useState(null);
+
+  function handleLogin(userData) {
+    setUser(userData);
+    localStorage.setItem("ssp_user", JSON.stringify(userData));
+  }
+
+  function handleLogout() {
+    setUser(null);
+    localStorage.removeItem("ssp_user");
+    setCurrentPage("home");
+  }
 
   function handleNavigate(page) {
     if (page === "people") setPeoplePageMounted(true);
@@ -1571,6 +1587,10 @@ function App() {
 
   function handleBackFromCriminal() {
     setCurrentPage("people");
+  }
+
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
   }
 
   return (
@@ -1596,8 +1616,15 @@ function App() {
             <strong>{PAGE_TITLES[currentPage] || ""}</strong>
           </div>
 
-          <div className="topbar__meta">
-            <span>Ambiente simulado</span>
+          <div className="topbar__user">
+            <div className="topbar__user-info">
+              <span className="topbar__user-name">{user.name}</span>
+              <span className="topbar__user-badge">{user.role} ({user.badge})</span>
+            </div>
+            <button className="topbar__logout-btn" onClick={handleLogout} title="Sair do sistema">
+              <Lock size={14} aria-hidden="true" />
+              <span>Sair</span>
+            </button>
           </div>
         </header>
 
