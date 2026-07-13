@@ -1,15 +1,26 @@
+from typing import Any, Optional
+
 from pydantic import BaseModel, Field, field_validator
 
-class LoginRequest(BaseModel):
-    key: str = Field(..., description="Chave de acesso de 4 dígitos")
-    password: str = Field(..., description="Senha de acesso")
-
-    @field_validator("key")
-    @classmethod
-    def validate_key(cls, v: str) -> str:
-        if not v.isdigit() or len(v) != 4:
-            raise ValueError("A chave de acesso deve conter exatamente 4 dígitos numéricos.")
-        return v
+class UserLogonInput(BaseModel):
+    """Login credentials schema"""
+    login: str = Field(
+        description='User key (petrobras key)',
+        examples=['ABCD'],
+    )
+    password: str = Field(
+        description='User password',
+        examples=['1234'],
+    )
+    metadata: Optional[dict[str, Any]] = Field(
+        default=None,
+        description='metadata (JSON)',
+    )
+    model_config = dict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+        from_attributes=True,
+    )
 
 class LoginResponse(BaseModel):
     token: str
