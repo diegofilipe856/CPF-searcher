@@ -1,31 +1,19 @@
 import React, { useState } from "react";
-import { Shield, Lock, Fingerprint, AlertCircle, Eye, EyeOff, Check, HelpCircle } from "lucide-react";
+import { Shield, Lock, Key, AlertCircle, Eye, EyeOff, HelpCircle } from "lucide-react";
+import { login as loginApi } from "./api/people";
 
 export default function Login({ onLogin }) {
-  const [cpf, setCpf] = useState("");
+  const [key, setKey] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [showForgotModal, setShowForgotModal] = useState(false);
 
-  function handleCpfChange(e) {
+  function handleKeyChange(e) {
     const value = e.target.value;
-    const digits = value.replace(/\D/g, "").slice(0, 11);
-    
-    // Format CPF: 000.000.000-00
-    let formatted = digits;
-    if (digits.length > 3) {
-      formatted = `${digits.slice(0, 3)}.${digits.slice(3)}`;
-    }
-    if (digits.length > 6) {
-      formatted = `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
-    }
-    if (digits.length > 9) {
-      formatted = `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
-    }
-    
-    setCpf(formatted);
+    const cleanValue = value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase();
+    setKey(cleanValue);
     setError("");
   }
 
@@ -34,33 +22,42 @@ export default function Login({ onLogin }) {
     setError("");
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     
-    const rawCpf = cpf.replace(/\D/g, "");
-    if (rawCpf.length !== 11) {
-      setError("Por favor, insira um CPF válido com 11 dígitos.");
+    if (key.length !== 4) {
+      setError("A chave de acesso deve conter exatamente 4 caracteres.");
       return;
     }
-    
-    if (password.trim().length < 4) {
-      setError("A senha deve conter no mínimo 4 caracteres.");
+
+    if (!password.trim()) {
+      setError("Por favor, insira a senha.");
       return;
     }
 
     setIsLoading(true);
     
-    // Simulate API request to backend (to be implemented later by user)
-    setTimeout(() => {
+    try {
+      const response = await loginApi(key, password);
       setIsLoading(false);
-      // Hardcoded mock user details for demonstration
-      onLogin({
-        cpf: rawCpf,
-        name: "Inspetor Bezerra",
-        badge: "SSP-48201",
-        role: "Agente de Investigação"
-      });
-    }, 1500);
+      
+      // Combine API fields under response.me with the fields required by the UI (name, role, badge, token)
+      const userData = {
+        token: response.token,
+        id: response.me.id,
+        name: response.me.name,
+        login: response.me.login,
+        email: response.me.email,
+        avatar: response.me.avatar,
+        role: response.me.login === "DIBE" ? "Administrador" : "Agente de Investigação",
+        badge: `SSP-${response.me.login}`
+      };
+      
+      onLogin(userData);
+    } catch (err) {
+      setIsLoading(false);
+      setError(err.message || "Chave de acesso ou senha incorreta.");
+    }
   }
 
   return (
@@ -91,17 +88,17 @@ export default function Login({ onLogin }) {
             )}
 
             <div className="login-field-group">
-              <label htmlFor="login-cpf">CPF do Servidor</label>
+              <label htmlFor="login-key">Chave de Acesso (4 caracteres)</label>
               <div className="login-input-wrapper">
-                <Fingerprint className="login-input-icon" size={18} />
+                <Key className="login-input-icon" size={18} />
                 <input
-                  id="login-cpf"
+                  id="login-key"
                   type="text"
-                  placeholder="000.000.000-00"
-                  value={cpf}
-                  onChange={handleCpfChange}
+                  placeholder="Ex: DIBE"
+                  value={key}
+                  onChange={handleKeyChange}
                   disabled={isLoading}
-                  autoComplete="username"
+                  maxLength={4}
                   required
                 />
               </div>
@@ -128,7 +125,6 @@ export default function Login({ onLogin }) {
                   value={password}
                   onChange={handlePasswordChange}
                   disabled={isLoading}
-                  autoComplete="current-password"
                   required
                 />
                 <button
@@ -178,7 +174,7 @@ export default function Login({ onLogin }) {
                 as credenciais dos servidores são gerenciadas exclusivamente pelo setor de TI.
               </p>
               <div className="login-modal-instruction">
-                <strong>Para redefinir sua senha ou solicitar acesso:</strong>
+                <strong>Para redefinir sua chave ou solicitar acesso:</strong>
                 <ul>
                   <li>Procure o departamento de informática da sua repartição;</li>
                   <li>Ligue para a Central de Suporte Interno no ramal <strong>4004</strong> ou <strong>8080</strong>;</li>
@@ -197,3 +193,4 @@ export default function Login({ onLogin }) {
     </div>
   );
 }
+

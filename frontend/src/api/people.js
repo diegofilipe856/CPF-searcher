@@ -1,9 +1,16 @@
 const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
 async function request(path, options) {
+  const userJson = localStorage.getItem("ssp_user");
+  const user = userJson ? JSON.parse(userJson) : null;
+  const token = user?.token;
+
+  const authHeaders = token ? { "Authorization": `Bearer ${token}` } : {};
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders,
       ...options?.headers,
     },
     ...options,
@@ -56,4 +63,12 @@ export function createCriminalRecord(data) {
   });
 }
 
+export function login(loginVal, password) {
+  return request("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ login: loginVal, password }),
+  });
+}
+
 export { API_BASE_URL };
+

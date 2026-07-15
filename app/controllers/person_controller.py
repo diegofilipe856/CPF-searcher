@@ -7,9 +7,10 @@ from typing import List
 from app.database import get_db
 from app.services import person_service
 from app.domain.schemas.person_response import PersonCreate, PersonResponse
+from app.shared.dependencies import get_current_user
 
 
-router = APIRouter(prefix="/person", tags=["person"])
+router = APIRouter(prefix="/person", tags=["person"], dependencies=[Depends(get_current_user)])
 
 @router.get("", response_model=List[PersonResponse])
 def list_people(db: Session = Depends(get_db)):
