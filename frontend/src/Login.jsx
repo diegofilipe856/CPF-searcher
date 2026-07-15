@@ -94,7 +94,7 @@ export default function Login({ onLogin }) {
                 <input
                   id="login-key"
                   type="text"
-                  placeholder="Ex: DIBE"
+                  placeholder="Ex: ABCD"
                   value={key}
                   onChange={handleKeyChange}
                   disabled={isLoading}
