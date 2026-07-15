@@ -17,6 +17,8 @@ jobs:
           clean: false # Mantém arquivos gerados no runner (como .env) se necessário
 
       - name: Subir Infraestrutura (Banco + Backend)
+        env:
+          SQUID_URL: ${{ secrets.SQUID_URL }}
         run: docker compose up -d --build
 
       - name: Instalar e Buildar Frontend

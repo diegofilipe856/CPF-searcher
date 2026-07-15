@@ -22,6 +22,7 @@ services:
       - db
     environment:
       - SSP_DATABASE_URL=postgresql://user:password@db:5432/cpf_db
+      - SQUID_URL
     command: sh -c "uv run uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
 volumes:
