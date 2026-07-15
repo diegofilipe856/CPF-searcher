@@ -7,7 +7,10 @@ from app.services import criminal_records_service
 from app.domain.schemas.criminal_records_response import CriminalRecordResponse, CriminalRecordUpdate, CriminalRecordCreate
 
 
-router = APIRouter(prefix="/criminal-records", tags=["criminal-records"])
+from app.shared.dependencies import get_current_user
+
+
+router = APIRouter(prefix="/criminal-records", tags=["criminal-records"], dependencies=[Depends(get_current_user)])
 
 @router.get("", response_model=list[CriminalRecordResponse])
 def list_criminal_records(db: Session = Depends(get_db)):
