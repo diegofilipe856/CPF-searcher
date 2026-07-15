@@ -12,8 +12,8 @@ export default function Login({ onLogin }) {
 
   function handleKeyChange(e) {
     const value = e.target.value;
-    const digits = value.replace(/\D/g, "").slice(0, 4);
-    setKey(digits);
+    const cleanValue = value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase();
+    setKey(cleanValue);
     setError("");
   }
 
@@ -26,7 +26,7 @@ export default function Login({ onLogin }) {
     e.preventDefault();
     
     if (key.length !== 4) {
-      setError("A chave de acesso deve conter exatamente 4 dígitos.");
+      setError("A chave de acesso deve conter exatamente 4 caracteres.");
       return;
     }
 
@@ -41,29 +41,17 @@ export default function Login({ onLogin }) {
       const response = await loginApi(key, password);
       setIsLoading(false);
       
-      // Map key to mock user info
-      let userData = {
-        name: "Inspetor Bezerra",
-        badge: "SSP-48201",
-        role: "Agente de Investigação",
-        token: response.token
+      // Combine API fields under response.me with the fields required by the UI (name, role, badge, token)
+      const userData = {
+        token: response.token,
+        id: response.me.id,
+        name: response.me.name,
+        login: response.me.login,
+        email: response.me.email,
+        avatar: response.me.avatar,
+        role: response.me.login === "DIBE" ? "Administrador" : "Agente de Investigação",
+        badge: `SSP-${response.me.login}`
       };
-      
-      if (key === "7777") {
-        userData = {
-          name: "Delegado Silva",
-          badge: "SSP-77777",
-          role: "Delegado Titular",
-          token: response.token
-        };
-      } else if (key === "0000") {
-        userData = {
-          name: "Administrador",
-          badge: "SSP-00000",
-          role: "Administrador",
-          token: response.token
-        };
-      }
       
       onLogin(userData);
     } catch (err) {
@@ -100,13 +88,13 @@ export default function Login({ onLogin }) {
             )}
 
             <div className="login-field-group">
-              <label htmlFor="login-key">Chave de Acesso (4 dígitos)</label>
+              <label htmlFor="login-key">Chave de Acesso (4 caracteres)</label>
               <div className="login-input-wrapper">
                 <Key className="login-input-icon" size={18} />
                 <input
                   id="login-key"
                   type="text"
-                  placeholder="Ex: 4820"
+                  placeholder="Ex: DIBE"
                   value={key}
                   onChange={handleKeyChange}
                   disabled={isLoading}

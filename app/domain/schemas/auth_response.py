@@ -21,9 +21,16 @@ class UserLogonInput(BaseModel):
         arbitrary_types_allowed=True,
         from_attributes=True,
     )
-
+class UserResponse(BaseModel):
+    id: str
+    name: str
+    login: str
+    email: str | None
+    avatar: str | None
 class LoginResponse(BaseModel):
     token: str
+    me: UserResponse
 
 class ErrorResponse(BaseModel):
     detail: str
+

@@ -56,10 +56,10 @@ export function createCriminalRecord(data) {
   });
 }
 
-export function login(key, password) {
+export function login(loginVal, password) {
   return request("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ key, password }),
+    body: JSON.stringify({ login: loginVal, password }),
   });
 }
 
