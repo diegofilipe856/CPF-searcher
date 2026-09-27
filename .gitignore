@@ -17,6 +17,7 @@ __pycache__/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+.wrangler/
 
 # Frontend
 node_modules/
