@@ -8,7 +8,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://ssp-digital.diegobezerra.space", "https://diegobezerra.space"],
+    allow_origins=["http://localhost:5173", "https://ssp-digital.diegobezerra.com.br", "https://diegobezerra.com.br"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -22,4 +22,3 @@ def read_root():
 app.include_router(person_controller.router)
 app.include_router(criminal_records_controller.router)
 app.include_router(auth_controller.router)
-

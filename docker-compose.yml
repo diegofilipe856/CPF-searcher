@@ -7,10 +7,14 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: cpf_db
-    ports:
-      - "100.64.60.29:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d cpf_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   backend:
     build: .
@@ -19,7 +23,8 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - SSP_DATABASE_URL=postgresql://user:password@db:5432/cpf_db
       - SQUID_URL

@@ -14,7 +14,7 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
         with:
-          clean: false # Mantém arquivos gerados no runner (como .env) se necessário
+          clean: true
 
       - name: Subir Infraestrutura (Banco + Backend)
         env:
@@ -24,9 +24,9 @@ jobs:
       - name: Instalar e Buildar Frontend
         working-directory: ./frontend
         env:
-          VITE_API_URL: https://ssp-digital.diegobezerra.space
+          VITE_API_URL: https://ssp-digital.diegobezerra.com.br
         run: |
-          npm install
+          npm ci
           npm run build
 
       - name: Deploy Frontend to Cloudflare Pages
