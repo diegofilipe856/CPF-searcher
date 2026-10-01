@@ -21,6 +21,10 @@ async function request(path, options) {
     const body = contentType.includes("application/json") ? await response.json() : await response.text();
     const message = typeof body === "string" ? body : body.detail;
 
+    if (response.status === 401 && path !== "/auth/login") {
+      window.dispatchEvent(new Event("ssp:unauthorized"));
+    }
+
     throw new Error(
       message === "Person not found" ? "Pessoa não encontrada." : message || "Não foi possível consultar a API.",
     );
@@ -71,4 +75,3 @@ export function login(loginVal, password) {
 }
 
 export { API_BASE_URL };
-

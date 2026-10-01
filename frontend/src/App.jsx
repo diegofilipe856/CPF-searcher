@@ -1555,13 +1555,50 @@ function PersonCriminalPage({ person, onBack }) {
 
 function App() {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("ssp_user");
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem("ssp_user");
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed?.token ? parsed : null;
+    } catch {
+      localStorage.removeItem("ssp_user");
+      return null;
+    }
   });
+  const [checkingSession, setCheckingSession] = useState(() => Boolean(localStorage.getItem("ssp_user")));
   const [currentPage, setCurrentPage] = useState("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [peoplePageMounted, setPeoplePageMounted] = useState(false);
   const [criminalPerson, setCriminalPerson] = useState(null);
+
+  useEffect(() => {
+    function handleUnauthorized() {
+      setUser(null);
+      localStorage.removeItem("ssp_user");
+      setCurrentPage("home");
+      setCriminalPerson(null);
+    }
+
+    window.addEventListener("ssp:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("ssp:unauthorized", handleUnauthorized);
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setCheckingSession(false);
+      return;
+    }
+
+    let active = true;
+    getPeople()
+      .catch(() => {})
+      .finally(() => {
+        if (active) setCheckingSession(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function handleLogin(userData) {
     setUser(userData);
@@ -1587,6 +1624,10 @@ function App() {
 
   function handleBackFromCriminal() {
     setCurrentPage("people");
+  }
+
+  if (checkingSession) {
+    return null;
   }
 
   if (!user) {
